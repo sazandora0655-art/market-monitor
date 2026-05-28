@@ -90,7 +90,7 @@
 
   /* pulse hero */
   .pulse{display:flex;flex-direction:column;gap:7px;height:100%}
-  .pulse-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+  .pulse-head{display:flex;justify-content:flex-end;align-items:flex-start;gap:10px}
   .pulse-q{font-size:11px;color:var(--txt);line-height:1.4}
   .pulse-cd{font-size:30px;font-weight:700;color:var(--red);letter-spacing:.04em;line-height:1;text-shadow:0 0 14px rgba(255,95,95,.4);white-space:nowrap}
   .pulse-cd small{display:block;font-size:8px;color:var(--dim);letter-spacing:.22em;text-align:right;margin-top:2px}
@@ -167,6 +167,7 @@
   @media (max-width:1024px), (pointer:coarse){
     .cg-tabbar{display:grid}
     .h-pulse{height:64vh}
+    .h-scan{height:248px}
     #cgViews[data-tab="pulse"] > .pnl:not([data-group="pulse"]){display:none}
     #cgViews[data-tab="models"] > .pnl:not([data-group="models"]){display:none}
     #cgViews[data-tab="scan"] > .pnl:not([data-group="scan"]){display:none}
@@ -239,7 +240,6 @@
       <div class="ph"><span>5-MIN PULSE <i class="lvb">LIVE</i></span><span class="r" id="pBet">+¥0</span></div>
       <div class="pc pulse">
         <div class="pulse-head">
-          <div class="pulse-q">PRIMARY が 5分後に<br>始値より<b style="color:var(--grn)">上</b>か<b style="color:var(--red)">下</b>か</div>
           <div class="pulse-cd" id="pCd">05:00<small>MIN : SEC</small></div>
         </div>
         <div class="pulse-prices">
