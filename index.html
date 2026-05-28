@@ -181,6 +181,43 @@
     font-size:14px;padding:0 18px;cursor:pointer;letter-spacing:.06em}
   #gate .g-err{color:var(--red);font-size:11px;height:14px;letter-spacing:.06em}
   #gate .g-lock{font-size:22px;color:var(--gold);letter-spacing:.3em}
+
+  /* ===== PC（広い画面）= 元デザイン風の多パネル一覧レイアウト ===== */
+  @media (min-width: 900px){
+    .m-top{padding:10px 16px}
+    .m-metrics{font-size:11px}
+    .m-tabbar{display:none}
+    .m-views{
+      display:grid;
+      grid-template-columns:300px minmax(0,1fr) minmax(0,1fr) 340px;
+      grid-template-rows:auto minmax(0,1.25fr) minmax(0,1fr) auto;
+      grid-template-areas:
+        "counters counters counters counters"
+        "conf     chart1   chart2   log"
+        "mesh     world    ccy      log"
+        "pos      pos      pos      pos";
+      gap:6px;
+      overflow:auto;
+      padding-bottom:0;
+    }
+    .m-views .m-view{display:contents}
+    .counters{grid-area:counters;grid-template-columns:1.7fr 1fr 1fr 1fr 1fr}
+    .ctr.big{grid-column:auto}
+    .ctr.big .val{font-size:36px}
+    .panel.h-conf{grid-area:conf}
+    .panel[data-chart="1"]{grid-area:chart1}
+    .panel[data-chart="2"]{grid-area:chart2}
+    .panel[data-chart="3"]{display:none!important}
+    .panel.h-mesh{grid-area:mesh}
+    .panel.h-world{grid-area:world}
+    .panel.h-ccy{grid-area:ccy}
+    .panel.h-log{grid-area:log}
+    .panel.h-pos{grid-area:pos}
+    /* グリッドが高さを制御するので固定高さを解除 */
+    .panel.h-conf,.panel.h-chart,.panel.h-mesh,.panel.h-world,.panel.h-log{height:auto}
+    .panel.h-pos{max-height:none}
+    .panel.h-pos .pc{overflow:auto}
+  }
 </style>
 </head>
 <body>
@@ -335,7 +372,7 @@
           </tr></thead><tbody id="posBody"></tbody></table>
         </div>
       </div>
-      <div class="panel">
+      <div class="panel h-ccy">
         <div class="ph"><span>CURRENCY STRENGTH</span><span class="live">1M</span></div>
         <div class="pc" id="ccyBox"></div>
       </div>
