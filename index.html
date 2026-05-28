@@ -8,6 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="robots" content="noindex,nofollow,noarchive">
 <title>TRADING SYSTEM — MOBILE MONITOR</title>
+<script>try{if(localStorage.getItem("aee_theme")==="b")location.replace("b.html");}catch(e){}</script>
 <style>
   :root{
     --bg:#06070b; --panel:#0b0d14; --panel2:#10131c; --line:#1c2030;
@@ -182,6 +183,28 @@
   #gate .g-err{color:var(--red);font-size:11px;height:14px;letter-spacing:.06em}
   #gate .g-lock{font-size:22px;color:var(--gold);letter-spacing:.3em}
 
+  /* ===== テーマ切替ギア ===== */
+  .gear{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));right:10px;z-index:90000;
+    width:34px;height:34px;border-radius:4px;background:var(--panel);border:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--txt);font-size:17px;
+    -webkit-tap-highlight-color:transparent}
+  .gear:hover{border-color:var(--accent);color:var(--accent)}
+  .gmenu{position:fixed;top:calc(48px + env(safe-area-inset-top,0px));right:10px;z-index:90000;
+    background:var(--panel);border:1px solid var(--line);border-radius:4px;min-width:206px;
+    box-shadow:0 10px 30px rgba(0,0,0,.55);overflow:hidden;display:none}
+  .gmenu.open{display:block}
+  .gmenu .gm-h{padding:8px 12px;font-size:9px;letter-spacing:.16em;color:var(--dim);
+    text-transform:uppercase;border-bottom:1px solid var(--line)}
+  .gmenu .gm-i{padding:11px 12px;font-size:12px;cursor:pointer;display:flex;gap:8px;align-items:center;
+    border-bottom:1px solid var(--line);color:var(--txt)}
+  .gmenu .gm-i:last-child{border-bottom:none}
+  .gmenu .gm-i:hover{background:var(--panel2)}
+  .gmenu .gm-i .tag{font-size:9px;color:var(--dim);letter-spacing:.12em}
+  .gmenu .gm-i.active{color:var(--accent);font-weight:700}
+  .gmenu .gm-i .dot{width:7px;height:7px;border-radius:50%;background:var(--line)}
+  .gmenu .gm-i.active .dot{background:var(--accent);box-shadow:0 0 6px var(--accent)}
+  .m-top{padding-right:48px}
+
   /* ===== PC（広い画面）= 元デザイン風の多パネル一覧レイアウト ===== */
   @media (min-width: 900px){
     .m-top{padding:10px 16px}
@@ -232,6 +255,13 @@
     <button id="gateBtn" type="button">ENTER</button>
   </div>
   <div class="g-err" id="gateErr"></div>
+</div>
+
+<div class="gear" id="gearBtn" title="デザイン切替">&#9881;</div>
+<div class="gmenu" id="gearMenu">
+  <div class="gm-h">DESIGN THEME</div>
+  <div class="gm-i active" data-theme="a" data-href="index.html"><span class="dot"></span>A · NEON CYBER <span class="tag">dark</span></div>
+  <div class="gm-i" data-theme="b" data-href="b.html"><span class="dot"></span>B · PAPER TERMINAL <span class="tag">light</span></div>
 </div>
 
 <div class="m-app">
@@ -1157,6 +1187,20 @@ requestAnimationFrame(kickoff);
 </script>
 
 <script>
+/* ===== テーマ切替ギア ===== */
+(function(){
+  var btn=document.getElementById("gearBtn"),menu=document.getElementById("gearMenu");
+  btn.addEventListener("click",function(e){e.stopPropagation();menu.classList.toggle("open");});
+  document.addEventListener("click",function(){menu.classList.remove("open");});
+  menu.addEventListener("click",function(e){
+    var it=e.target.closest(".gm-i"); if(!it)return;
+    var th=it.dataset.theme;
+    try{localStorage.setItem("aee_theme",th);}catch(x){}
+    if(th!=="a") location.href=it.dataset.href;
+    menu.classList.remove("open");
+  });
+})();
+
 /* ===== 合言葉ゲート（SHA-256ハッシュ照合・平文はソースに残らない） ===== */
 (function(){
   "use strict";
