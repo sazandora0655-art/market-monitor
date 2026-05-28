@@ -6,6 +6,7 @@
 <meta name="theme-color" content="#06060b">
 <meta name="color-scheme" content="dark">
 <meta name="robots" content="noindex,nofollow,noarchive">
+<meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <title>EXECUTION CORE — FORCE GRAPH</title>
 <style>
   :root{
@@ -139,16 +140,16 @@
   .fg-tab{padding:11px 2px;text-align:center;background:var(--panel);border:1px solid var(--line);border-radius:4px;
     color:var(--dim);font-size:10px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;-webkit-tap-highlight-color:transparent}
   .fg-tab.active{color:var(--mag);border-color:var(--mag);background:linear-gradient(180deg,rgba(255,45,155,.12),transparent)}
-  @media (max-width:919px){
+  @media (max-width:1024px), (pointer:coarse){
     .fg-tabbar{display:grid}
-    .h-force{height:64vh}
+    .h-force{height:62vh}
     #fgViews[data-tab="summary"] > .pnl:not([data-group="summary"]){display:none}
     #fgViews[data-tab="market"] > .pnl:not([data-group="market"]){display:none}
     #fgViews[data-tab="graph"] > .pnl:not([data-group="graph"]){display:none}
     #fgViews[data-tab="data"] > .pnl:not([data-group="data"]){display:none}
   }
 
-  @media (min-width:920px){
+  @media (min-width:1025px) and (pointer:fine){
     .fg-views{display:grid;overflow:auto;gap:7px;
       grid-template-columns:240px 1.55fr 220px 1.05fr;
       grid-template-rows:150px minmax(0,1fr) 190px 142px;
