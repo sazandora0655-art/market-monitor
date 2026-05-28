@@ -3,28 +3,28 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
-<meta name="theme-color" content="#05090b">
+<meta name="theme-color" content="#0a0908">
 <meta name="color-scheme" content="dark">
 <meta name="robots" content="noindex,nofollow,noarchive">
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
-<title>ORBITAL CORE — GLOBAL GRID</title>
+<title>PULSE ENGINE — 5-MIN ORACLE</title>
 <style>
   :root{
     color-scheme:dark;
-    --bg:#05090b; --panel:#091211; --panel2:#0d1816; --line:#19302b;
-    --txt:#cfeee2; --dim:#5f7d74; --acc:#22e0a3; --acc2:#7affd6;
-    --grn:#22e0a3; --red:#ff5d76; --amber:#e8c15a; --blue:#46c8ff;
+    --bg:#0a0908; --panel:#13110d; --panel2:#191510; --line:#2c2618;
+    --txt:#efe7d4; --dim:#867a5f; --acc:#f3b53a; --acc2:#ffd97a;
+    --grn:#46d98a; --red:#ff5f5f; --mag:#ff5bb0; --blue:#5bb6ff;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%;background:var(--bg);color:var(--txt);
     font-family:"JetBrains Mono","Consolas","DejaVu Sans Mono",monospace;font-size:12px;letter-spacing:.01em;-webkit-text-size-adjust:100%}
   body{overflow:hidden}
   body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;
-    background:radial-gradient(ellipse at center,transparent 55%,rgba(0,4,3,.6) 100%)}
-  body::after{content:"";position:fixed;inset:0;pointer-events:none;opacity:.05;z-index:9998;
-    background-image:repeating-linear-gradient(0deg,rgba(34,224,163,.05) 0 1px,transparent 1px 3px)}
+    background:radial-gradient(ellipse at center,transparent 52%,rgba(4,3,0,.62) 100%)}
+  body::after{content:"";position:fixed;inset:0;pointer-events:none;opacity:.045;z-index:9998;
+    background-image:repeating-linear-gradient(0deg,rgba(243,181,58,.06) 0 1px,transparent 1px 3px)}
 
-  #gate{position:fixed;inset:0;z-index:100000;background:radial-gradient(ellipse at center,#0a1614,#05090b 80%);
+  #gate{position:fixed;inset:0;z-index:100000;background:radial-gradient(ellipse at center,#15110a,#0a0908 80%);
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:24px;text-align:center;transition:opacity .35s}
   #gate.hide{opacity:0;pointer-events:none}
   #gate .g-brand{font-weight:700;letter-spacing:.18em;color:var(--acc);font-size:15px}
@@ -33,7 +33,7 @@
   #gate input{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:3px;color:var(--txt);
     font-size:15px;padding:12px 14px;font-family:inherit;letter-spacing:.1em;outline:none}
   #gate input:focus{border-color:var(--acc)}
-  #gate button{background:var(--acc);border:none;border-radius:3px;color:#04110c;font-weight:700;font-size:14px;
+  #gate button{background:var(--acc);border:none;border-radius:3px;color:#1a1305;font-weight:700;font-size:14px;
     padding:0 18px;cursor:pointer;letter-spacing:.06em;font-family:inherit}
   #gate .g-err{color:var(--red);font-size:11px;height:14px}
   #gate .g-lock{font-size:22px;color:var(--acc);letter-spacing:.3em}
@@ -66,85 +66,122 @@
   @keyframes pl{0%,100%{opacity:1}50%{opacity:.4}}
   .cg-top .spacer{flex:1}
   .cg-top .clock{color:var(--acc);font-size:12px;letter-spacing:.06em}
-  .tag{font-size:9px;letter-spacing:.1em;padding:2px 7px;border-radius:2px;background:rgba(34,224,163,.14);color:var(--acc2)}
+  .tag{font-size:9px;letter-spacing:.1em;padding:2px 7px;border-radius:2px;background:rgba(243,181,58,.14);color:var(--acc2)}
 
   .cg-views{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;gap:7px}
 
   .pnl{background:var(--panel);border:1px solid var(--line);border-radius:4px;display:flex;flex-direction:column;min-height:0;overflow:hidden;position:relative}
   .pnl .ph{display:flex;justify-content:space-between;align-items:center;padding:7px 11px;border-bottom:1px solid var(--line);
-    font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--dim)}
+    font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
   .pnl .ph .r{color:var(--acc);font-weight:700}
   .pnl .pc{flex:1;min-height:0;padding:9px 11px;position:relative}
   canvas{display:block;width:100%;height:100%}
 
-  .h-wallet{height:150px} .h-globe{height:330px} .h-nodes{height:150px} .h-thru{height:150px}
-  .h-book{height:150px} .h-pnl{height:150px} .h-log{height:140px}
+  .h-perf{height:176px} .h-pulse{height:360px} .h-markov{height:316px} .h-mc{height:328px} .h-scan{height:160px} .h-log{height:150px}
 
-  .w-big{font-size:28px;font-weight:700;color:var(--acc);line-height:1;margin:3px 0;text-shadow:0 0 14px rgba(34,224,163,.35)}
-  .w-row{display:flex;justify-content:space-between;font-size:10.5px;margin-top:5px;color:var(--txt)}
-  .w-row span:first-child{color:var(--dim)}
-  .w-tags{display:flex;gap:6px;margin-top:7px}
+  /* perf / wallet */
+  .perf{display:flex;flex-direction:column;gap:6px}
+  .perf-bal{font-size:30px;font-weight:700;color:var(--acc);line-height:1;text-shadow:0 0 16px rgba(243,181,58,.35)}
+  .perf-sub{font-size:9.5px;color:var(--dim)} .perf-sub b{color:var(--txt)}
+  .perf-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;margin-top:2px}
+  .perf-grid>div{display:flex;justify-content:space-between;font-size:10px;border-bottom:1px dashed rgba(255,255,255,.05);padding-bottom:3px}
+  .perf-grid span{color:var(--dim)} .perf-grid b{color:var(--txt)} .perf-grid b.g{color:var(--grn)}
+  .perf-wal{font-size:9px;color:var(--dim);margin-top:2px;letter-spacing:.04em} .perf-wal b{color:var(--acc2)}
 
-  .globe-meta{position:absolute;top:8px;left:12px;font-size:9px;color:var(--dim);letter-spacing:.1em;line-height:1.7;z-index:2}
-  .globe-meta b{color:var(--acc)}
-  .globe-meta2{position:absolute;top:8px;right:12px;font-size:9px;color:var(--dim);letter-spacing:.1em;line-height:1.7;text-align:right;z-index:2}
-  .globe-meta2 b{color:var(--txt)}
+  /* pulse hero */
+  .pulse{display:flex;flex-direction:column;gap:7px;height:100%}
+  .pulse-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+  .pulse-q{font-size:11px;color:var(--txt);line-height:1.4}
+  .pulse-cd{font-size:30px;font-weight:700;color:var(--red);letter-spacing:.04em;line-height:1;text-shadow:0 0 14px rgba(255,95,95,.4);white-space:nowrap}
+  .pulse-cd small{display:block;font-size:8px;color:var(--dim);letter-spacing:.22em;text-align:right;margin-top:2px}
+  .pulse-cd.urg{animation:blink .6s steps(2) infinite}
+  @keyframes blink{50%{opacity:.4}}
+  .pulse-prices{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+  .pulse-prices>div{display:flex;flex-direction:column} .pulse-prices span{font-size:8px;color:var(--dim);letter-spacing:.12em}
+  .pulse-prices b{font-size:15px;color:var(--txt)} .pulse-prices b.acc{color:var(--acc)}
+  .pulse-prices i{font-size:10px;font-style:normal} .pulse-prices i.g{color:var(--grn)} .pulse-prices i.r{color:var(--red)}
+  .pulse-odds{margin-left:auto;display:flex;gap:6px}
+  .od{font-size:9px;padding:5px 10px;border-radius:3px;letter-spacing:.06em} .od b{font-size:13px;display:block;text-align:center;margin-top:1px}
+  .od.up{background:rgba(70,217,138,.14);color:var(--grn)} .od.dn{background:rgba(255,95,95,.14);color:var(--red)}
+  .pulse-chart{flex:1;min-height:0;position:relative}
+  .pulse-str{display:flex;align-items:center;gap:8px;font-size:9px;color:var(--dim);letter-spacing:.1em}
+  .pulse-str .bar{flex:1;height:5px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden}
+  .pulse-str .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--acc),var(--acc2));border-radius:3px;transition:width .5s}
+  .pulse-str b{color:var(--acc)}
+  .lvb{font-size:8px;background:rgba(70,217,138,.18);color:var(--grn);padding:1px 5px;border-radius:2px;font-style:normal;margin-left:6px;letter-spacing:.1em}
 
-  .nodes{font-size:10.5px;height:100%;overflow:hidden}
-  .nodes .nr{display:grid;grid-template-columns:14px 1fr 54px;gap:7px;align-items:center;padding:3px 0;border-bottom:1px dashed rgba(255,255,255,.04)}
-  .nodes .nr .d{width:7px;height:7px;border-radius:50%;background:var(--acc);box-shadow:0 0 5px var(--acc)}
-  .nodes .nr .d.w{background:var(--amber);box-shadow:0 0 5px var(--amber)}
-  .nodes .nr .nm{color:var(--txt)}
-  .nodes .nr .lt{text-align:right;color:var(--dim)}
+  /* markov */
+  .markov{display:grid;grid-template-columns:1.05fr .85fr;gap:10px;font-size:10px;height:100%}
+  .mk-l{display:flex;flex-direction:column;gap:6px;min-width:0}
+  .mk-r{display:flex;flex-direction:column;gap:6px;min-width:0}
+  .mk-now{font-size:10px;color:var(--dim)} .mk-now b{padding:1px 7px;border-radius:2px}
+  .st-bull{color:var(--grn);background:rgba(70,217,138,.14)} .st-bear{color:var(--red);background:rgba(255,95,95,.14)} .st-side{color:var(--acc);background:rgba(243,181,58,.14)}
+  .mk-mx{width:100%;border-collapse:collapse;font-size:10px}
+  .mk-mx td{padding:2px 3px;text-align:center;color:var(--txt);border:1px solid rgba(255,255,255,.05)}
+  .mk-mx tr:first-child td,.mk-mx td:first-child{color:var(--dim);font-size:9px;border:none}
+  .mk-mx td.dg{background:rgba(243,181,58,.16);color:var(--acc2);font-weight:700}
+  .mk-form{font-size:9px;color:var(--dim);line-height:1.7} .mk-form b{color:var(--txt)}
+  .mk-stat{display:flex;flex-direction:column;gap:4px}
+  .mk-sr{display:flex;align-items:center;gap:6px;font-size:9px} .mk-sr>span:first-child{width:30px;color:var(--dim)}
+  .mk-sr .b{flex:1;height:5px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden}
+  .mk-sr .b i{display:block;height:100%;transition:width .6s} .mk-sr i.g{background:var(--grn)} .mk-sr i.r{background:var(--red)} .mk-sr i.a{background:var(--acc)}
+  .mk-sr b{width:30px;text-align:right;color:var(--txt)}
+  .mk-glabel{font-size:8px;color:var(--dim);letter-spacing:.14em}
+  .mk-r canvas{flex:1;min-height:40px;width:100%}
 
-  .eq-c{position:absolute;left:10px;right:10px;bottom:8px;top:38px}
-  .pnl-top{display:flex;justify-content:space-between;font-size:11px;margin-bottom:2px}
-  .pnl-top .v{font-weight:700;color:var(--acc)}
+  /* monte carlo */
+  .mc{display:grid;grid-template-columns:1fr .72fr;grid-template-rows:1fr 54px;gap:8px;height:100%}
+  .mc-polar{grid-column:1;grid-row:1/3;min-height:0;width:100%}
+  .mc-stats{grid-column:2;grid-row:1;display:flex;flex-direction:column;gap:5px;justify-content:center}
+  .mc-stats>div{display:flex;justify-content:space-between;font-size:10px;border-bottom:1px dashed rgba(255,255,255,.05);padding-bottom:3px}
+  .mc-stats span{color:var(--dim)} .mc-stats b{color:var(--txt)} .mc-stats b.g{color:var(--grn)} .mc-stats b.r{color:var(--red)} .mc-stats b.acc{color:var(--acc)}
+  .mc-hist{grid-column:2;grid-row:2;width:100%;height:100%}
 
-  .book{font-size:10px;height:100%;display:flex;flex-direction:column;justify-content:center}
-  .book .lr{display:flex;justify-content:space-between;padding:1px 2px}
-  .book .lr .sz{color:var(--dim)}
-  .book .lr.ask .px{color:var(--red)} .book .lr.bid .px{color:var(--acc)}
-  .book .mid{color:var(--amber);text-align:center;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin:3px 0;padding:2px 0;font-weight:700}
+  /* pattern scanner */
+  .scan{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;height:100%}
+  .sc-card{border:1px solid var(--line);border-radius:3px;padding:6px 8px;display:flex;flex-direction:column;gap:2px;min-width:0;background:rgba(255,255,255,.012)}
+  .sc-card.watch{border-color:rgba(243,181,58,.5);box-shadow:inset 0 0 0 1px rgba(243,181,58,.16)}
+  .sc-t{font-size:10px;font-weight:700;color:var(--txt);letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sc-d{font-size:8px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sc-card canvas{flex:1;min-height:0;width:100%}
+  .sc-c{font-size:8px;color:var(--dim);letter-spacing:.08em} .sc-c b{font-size:11px} .sc-c b.g{color:var(--grn)} .sc-c b.a{color:var(--acc)}
 
-  .thru-spark{position:absolute;left:11px;right:11px;bottom:10px;top:46px}
-  .thru-big{font-size:22px;font-weight:700;color:var(--acc)}
-  .thru-lbl{font-size:9px;color:var(--dim);letter-spacing:.1em;text-transform:uppercase}
-
-  .cli{height:100%;overflow:hidden;font-size:10.5px;line-height:1.6;color:var(--acc)}
+  /* conviction / log */
+  .cli{height:100%;overflow:hidden;font-size:10px;line-height:1.65;color:var(--acc)}
   .cli .ln{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;animation:lin .25s}
   @keyframes lin{from{opacity:0}to{opacity:1}}
   .cli .ln .pr{color:var(--dim)}
-  .cli .ln.ok{color:var(--acc)} .cli .ln.warn{color:var(--amber)} .cli .ln.dim{color:var(--dim)}
+  .cli .ln.ok{color:var(--grn)} .cli .ln.warn{color:var(--acc2)} .cli .ln.dim{color:var(--dim)}
 
   .tick{background:var(--panel);border:1px solid var(--line);border-radius:4px;overflow:hidden;position:relative;flex:0 0 auto}
   .tick-tr{display:flex;animation:scl 70s linear infinite;white-space:nowrap;padding:8px 0;font-size:11px}
   @keyframes scl{from{transform:translateX(0)}to{transform:translateX(-50%)}}
   .tick-it{margin:0 22px;display:inline-flex;gap:8px}
   .tick-it .s{color:var(--dim)} .tick-it .p{color:var(--txt);font-weight:600}
-  .tick-it .c.u{color:var(--acc)} .tick-it .c.d{color:var(--red)}
+  .tick-it .c.u{color:var(--grn)} .tick-it .c.d{color:var(--red)}
 
   .cg-tabbar{display:none;grid-template-columns:repeat(3,1fr);gap:6px;flex:0 0 auto}
   .cg-tab{padding:11px 2px;text-align:center;background:var(--panel);border:1px solid var(--line);border-radius:4px;
     color:var(--dim);font-size:10px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;-webkit-tap-highlight-color:transparent}
-  .cg-tab.active{color:var(--acc);border-color:var(--acc);background:linear-gradient(180deg,rgba(34,224,163,.12),transparent)}
+  .cg-tab.active{color:var(--acc);border-color:var(--acc);background:linear-gradient(180deg,rgba(243,181,58,.12),transparent)}
   @media (max-width:1024px), (pointer:coarse){
     .cg-tabbar{display:grid}
-    .h-globe{height:60vh}
-    #cgViews[data-tab="summary"] > .pnl:not([data-group="summary"]){display:none}
-    #cgViews[data-tab="market"] > .pnl:not([data-group="market"]){display:none}
-    #cgViews[data-tab="data"] > .pnl:not([data-group="data"]){display:none}
+    .h-pulse{height:64vh}
+    #cgViews[data-tab="pulse"] > .pnl:not([data-group="pulse"]){display:none}
+    #cgViews[data-tab="models"] > .pnl:not([data-group="models"]){display:none}
+    #cgViews[data-tab="scan"] > .pnl:not([data-group="scan"]){display:none}
   }
   @media (min-width:1025px) and (pointer:fine){
-    .cg-views{display:grid;overflow:auto;gap:7px;
-      grid-template-columns:258px minmax(0,1.8fr) 258px;
-      grid-template-rows:150px minmax(0,1fr) 160px;
+    .cg-views{display:grid;overflow:auto;gap:8px;
+      grid-template-columns:minmax(0,360px) minmax(0,1fr);
+      grid-template-rows:minmax(176px,1fr) minmax(150px,1fr) minmax(150px,1fr) minmax(150px,1fr) minmax(140px,.9fr);
       grid-template-areas:
-        "wallet globe nodes"
-        "thru   globe pnl"
-        "book   log   log";}
-    .h-wallet{grid-area:wallet}.h-globe{grid-area:globe}.h-nodes{grid-area:nodes}.h-thru{grid-area:thru}
-    .h-book{grid-area:book}.h-pnl{grid-area:pnl}.h-log{grid-area:log}
+        "perf   pulse"
+        "markov pulse"
+        "markov mc"
+        "scan   mc"
+        "log    log";}
+    .h-perf{grid-area:perf}.h-pulse{grid-area:pulse}.h-markov{grid-area:markov}.h-mc{grid-area:mc}.h-scan{grid-area:scan}.h-log{grid-area:log}
     .pnl{height:auto}
   }
 </style>
@@ -153,7 +190,7 @@
 
 <div id="gate">
   <div class="g-lock">&#9678; &#9678; &#9678;</div>
-  <div class="g-brand">ORBITAL CORE</div>
+  <div class="g-brand">PULSE ENGINE</div>
   <div class="g-sub">Restricted · Enter passphrase</div>
   <div class="g-row">
     <input id="gateInput" type="password" inputmode="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="合言葉">
@@ -167,83 +204,119 @@
   <div class="gm-h">DESIGN THEME</div>
   <div class="gm-i" data-theme="a" data-href="index.html"><span class="dot"></span>A · NEON CYBER <span class="tag">dark</span></div>
   <div class="gm-i" data-theme="b" data-href="b.html"><span class="dot"></span>B · FORCE GRAPH <span class="tag">violet</span></div>
-  <div class="gm-i active" data-theme="c" data-href="c.html"><span class="dot"></span>C · GLOBAL GRID <span class="tag">emerald</span></div>
+  <div class="gm-i active" data-theme="c" data-href="c.html"><span class="dot"></span>C · PULSE ENGINE <span class="tag">amber</span></div>
 </div>
 
 <div class="cg-app">
   <div class="cg-top">
-    <div class="brand">ORBITAL CORE <small>// GLOBAL ROUTING</small></div>
+    <div class="brand">PULSE ENGINE <small>// 5-MIN ORACLE</small></div>
     <span class="dot"></span><span class="tag">LIVE</span>
-    <div class="it">LOW-LATENCY MESH</div>
-    <div class="it">ROUTES <b id="cRoutes">0</b></div>
+    <div class="it">5MIN LAG-EXPLOIT</div>
+    <div class="it">ROUND <b id="pRound">0</b></div>
     <div class="spacer"></div>
-    <div class="it">WIN <b id="cWin">—</b></div>
-    <div class="clock" id="cClock">--:--:--</div>
+    <div class="it">WIN <b id="pWin">—</b></div>
+    <div class="clock" id="pClock">--:--:--</div>
   </div>
 
-  <div class="cg-views" id="cgViews" data-tab="summary">
+  <div class="cg-views" id="cgViews" data-tab="pulse">
 
-    <div class="pnl h-wallet" data-group="summary">
-      <div class="ph"><span>WALLET</span><span class="r">ONLINE</span></div>
-      <div class="pc">
-        <div class="thru-lbl">BALANCE</div>
-        <div class="w-big" id="cBal">¥0</div>
-        <div class="w-row"><span>SESSION</span><b id="cSess" style="color:var(--acc)">+¥0</b></div>
-        <div class="w-row"><span>FILLS</span><b id="cFills">0</b></div>
-        <div class="w-tags"><span class="tag" id="cRoi">+0%</span><span class="tag">EDGE 0.0%</span></div>
+    <div class="pnl h-perf" data-group="pulse">
+      <div class="ph"><span>ENGINE · LIVE PNL</span><span class="r">ALL-TIME</span></div>
+      <div class="pc perf">
+        <div class="perf-bal" id="pBal">¥0</div>
+        <div class="perf-sub">realised · all-time · <b id="pTrades">0.0%</b> · <b id="pSharpe">Sharpe 0.00</b></div>
+        <div class="perf-grid">
+          <div><span>TRADES</span><b id="pNtr">0</b></div>
+          <div><span>WIN RATE</span><b id="pWr" class="g">0%</b></div>
+          <div><span>PNL / DAY</span><b id="pDay">¥0</b></div>
+          <div><span>BIGGEST WIN</span><b id="pBig" class="g">¥0</b></div>
+        </div>
+        <div class="perf-wal"><span>WALLET</span> <b id="pWal">0x…</b> · NET LIVE</div>
       </div>
     </div>
 
-    <div class="pnl h-globe" data-group="summary">
-      <div class="ph"><span>GLOBAL ROUTING GRID</span><span class="r" id="cHubs">7 HUBS</span></div>
-      <div class="pc" style="padding:0">
-        <canvas id="cGlobe"></canvas>
-        <div class="globe-meta">UPLINK <b id="cUp">--</b><br>JITTER <b id="cJit">--</b><br>PACKETS <b id="cPkt">--</b></div>
-        <div class="globe-meta2">ORBIT <b id="cOrb">SYNC</b><br>RTT <b id="cRtt">--</b><br>HOPS <b id="cHop">--</b></div>
+    <div class="pnl h-pulse" data-group="pulse">
+      <div class="ph"><span>5-MIN PULSE <i class="lvb">LIVE</i></span><span class="r" id="pBet">+¥0</span></div>
+      <div class="pc pulse">
+        <div class="pulse-head">
+          <div class="pulse-q">PRIMARY が 5分後に<br>始値より<b style="color:var(--grn)">上</b>か<b style="color:var(--red)">下</b>か</div>
+          <div class="pulse-cd" id="pCd">05:00<small>MIN : SEC</small></div>
+        </div>
+        <div class="pulse-prices">
+          <div><span>PRICE TO BEAT</span><b id="pBeat">¥0</b></div>
+          <div><span>CURRENT</span><b id="pCur" class="acc">¥0</b></div>
+          <div><span>Δ</span><i id="pCurD" class="g">+¥0</i></div>
+          <div class="pulse-odds">
+            <span class="od up">UP<b id="pUp">50%</b></span>
+            <span class="od dn">DOWN<b id="pDn">50%</b></span>
+          </div>
+        </div>
+        <div class="pulse-chart"><canvas id="cPulse"></canvas></div>
+        <div class="pulse-str"><span>PULSE STRENGTH</span><div class="bar"><i id="pStrBar" style="width:0%"></i></div><b id="pStr">0%</b></div>
       </div>
     </div>
 
-    <div class="pnl h-nodes" data-group="data">
-      <div class="ph"><span>GLOBAL NODES</span><span class="r" id="cNodeN">0</span></div>
-      <div class="pc" style="padding:6px 11px;overflow:hidden"><div class="nodes" id="cNodes"></div></div>
-    </div>
-
-    <div class="pnl h-thru" data-group="market">
-      <div class="ph"><span>THROUGHPUT</span><span class="r">ORD/S</span></div>
-      <div class="pc">
-        <div class="thru-lbl">ORDERS / SEC</div>
-        <div class="thru-big" id="cThruN">0</div>
-        <canvas class="thru-spark" id="cThru"></canvas>
+    <div class="pnl h-markov" data-group="models">
+      <div class="ph"><span>MARKOV REGIME MODEL · LIVE</span><span class="r">3-STATE</span></div>
+      <div class="pc markov">
+        <div class="mk-l">
+          <div class="mk-now">NOW <b id="mkNow" class="st-bull">BULL</b> · <span id="mkTicks">0</span> ticks</div>
+          <table class="mk-mx" id="mkMx"></table>
+          <div class="mk-form">
+            P(X<sub>n+1</sub>=B | X<sub>n</sub>) = <b id="mkP">0.00</b><br>
+            π<sub>∞</sub> = <b id="mkPi">0.00</b> · I★=(bp−q)/b = <b id="mkI">0.00</b>
+          </div>
+        </div>
+        <div class="mk-r">
+          <div class="mk-glabel">Π · STATIONARY DIST</div>
+          <div class="mk-stat">
+            <div class="mk-sr"><span>BULL</span><div class="b"><i class="g" id="mkB" style="width:0%"></i></div><b id="mkBv">0.00</b></div>
+            <div class="mk-sr"><span>BEAR</span><div class="b"><i class="r" id="mkR" style="width:0%"></i></div><b id="mkRv">0.00</b></div>
+            <div class="mk-sr"><span>SIDE</span><div class="b"><i class="a" id="mkS" style="width:0%"></i></div><b id="mkSv">0.00</b></div>
+          </div>
+          <div class="mk-glabel">STATE GRAPH</div>
+          <canvas id="cMkGraph"></canvas>
+        </div>
       </div>
     </div>
 
-    <div class="pnl h-pnl" data-group="summary">
-      <div class="ph"><span>P&amp;L CURVE</span><span class="r" id="cRoi2">+0%</span></div>
-      <div class="pc">
-        <div class="pnl-top"><span>SESSION</span><span class="v" id="cEqNow">+¥0</span></div>
-        <canvas class="eq-c" id="cEq"></canvas>
+    <div class="pnl h-mc" data-group="models">
+      <div class="ph"><span>MONTE CARLO · 500 PATHS · 5MIN</span><span class="r" id="mcConv">0% CONV</span></div>
+      <div class="pc mc">
+        <canvas class="mc-polar" id="cMcPolar"></canvas>
+        <div class="mc-stats">
+          <div><span>P(UP)</span><b class="g" id="mcUp">0.00</b></div>
+          <div><span>P(DOWN)</span><b class="r" id="mcDn">0.00</b></div>
+          <div><span>MEAN Δ</span><b class="acc" id="mcMean">+¥0</b></div>
+          <div><span>σ</span><b id="mcSig">¥0</b></div>
+        </div>
+        <canvas class="mc-hist" id="cMcHist"></canvas>
       </div>
     </div>
 
-    <div class="pnl h-book" data-group="market">
-      <div class="ph"><span>ROUTING BOOK</span><span class="r" id="cSpr">SPREAD 0.5</span></div>
-      <div class="pc"><div class="book" id="cBook"></div></div>
+    <div class="pnl h-scan" data-group="scan">
+      <div class="ph"><span>PATTERN SCANNER · M15 / M1</span><span class="r">SCANNING…</span></div>
+      <div class="pc scan">
+        <div class="sc-card"><div class="sc-t">BOS · UP</div><div class="sc-d">higher high confirmed</div><canvas id="cBos"></canvas><div class="sc-c">CONF <b class="g" id="scBosC">0%</b></div></div>
+        <div class="sc-card watch"><div class="sc-t">CHoCH <span style="color:var(--acc2)">●</span></div><div class="sc-d">change of character</div><canvas id="cChoch"></canvas><div class="sc-c">CONF <b class="a" id="scChC">0%</b></div></div>
+        <div class="sc-card"><div class="sc-t">LIQUIDITY SWEEP</div><div class="sc-d">stops grabbed · reverse</div><canvas id="cSweep"></canvas><div class="sc-c">CONF <b class="g" id="scSwC">0%</b></div></div>
+      </div>
     </div>
 
-    <div class="pnl h-log" data-group="data">
-      <div class="ph"><span>ROUTE LOG · LIVE</span><span class="r">STREAM</span></div>
-      <div class="pc" style="padding:7px 10px"><div class="cli" id="cLog"></div></div>
+    <div class="pnl h-log" data-group="scan">
+      <div class="ph"><span>LIVE CONVICTION · EXEC STREAM</span><span class="r">STREAM</span></div>
+      <div class="pc" style="padding:7px 10px"><div class="cli" id="pLog"></div></div>
     </div>
 
   </div>
 
   <div class="cg-tabbar">
-    <div class="cg-tab" data-tab="summary">SUMMARY</div>
-    <div class="cg-tab" data-tab="market">MARKET</div>
-    <div class="cg-tab" data-tab="data">DATA</div>
+    <div class="cg-tab" data-tab="pulse">PULSE</div>
+    <div class="cg-tab" data-tab="models">MODELS</div>
+    <div class="cg-tab" data-tab="scan">SCAN</div>
   </div>
 
-  <div class="tick"><div class="tick-tr" id="cTick"></div></div>
+  <div class="tick"><div class="tick-tr" id="pTick"></div></div>
 </div>
 
 <script>
@@ -252,156 +325,209 @@ const $=id=>document.getElementById(id);
 const rnd=(a,b)=>a+Math.random()*(b-a);
 const rndi=(a,b)=>Math.floor(rnd(a,b+1));
 const pick=a=>a[Math.floor(Math.random()*a.length)];
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
 const f$=v=>(v<0?"-¥":"¥")+Math.abs(Math.round(v)).toLocaleString();
-const fk=v=>v>=1e6?(v/1e6).toFixed(1)+"M":v>=1e3?Math.round(v/1e3)+"K":""+Math.round(v);
+const fk=v=>{v=Math.round(v);return v>=1e8?(v/1e8).toFixed(2)+"億":v>=1e4?Math.round(v/1e4)+"万":""+v;};
+const hx=n=>{let s="";for(let i=0;i<n;i++)s+="0123456789abcdef"[rndi(0,15)];return s;};
 
+/* canvas framework */
 const cv={};
 function sz(id){const c=$(id);if(!c)return;const dpr=Math.min(window.devicePixelRatio||1,2);
   const r=c.getBoundingClientRect();c.width=Math.max(1,r.width*dpr);c.height=Math.max(1,r.height*dpr);
   const x=c.getContext("2d");x.setTransform(dpr,0,0,dpr,0,0);cv[id]={w:r.width,h:r.height,ctx:x};}
-function sizeAll(){["cGlobe","cThru","cEq"].forEach(sz);}
+const CANV=["cPulse","cMcPolar","cMcHist","cMkGraph","cBos","cChoch","cSweep"];
+function sizeAll(){CANV.forEach(sz);drawCandlesAll();}
 
-function tickClock(){$("cClock").textContent=new Date().toLocaleTimeString("en-GB",{hour12:false,timeZone:"Asia/Tokyo"});}
+/* clock (JST) */
+function tickClock(){$("pClock").textContent=new Date().toLocaleTimeString("en-GB",{hour12:false,timeZone:"Asia/Tokyo"});}
 setInterval(tickClock,1000);tickClock();
 
-/* wallet */
-let bal=rnd(140000,280000),start=bal,sess=0,fills=rndi(800,1600),wins=0,trades=0,routes=rndi(180,260);
-function tickWallet(){
-  const d=rnd(-220,330);bal+=d;sess+=d;if(Math.random()<0.4)fills+=rndi(1,4);routes=Math.max(120,routes+rndi(-6,8));
-  $("cBal").textContent=f$(bal);
-  $("cSess").textContent=(sess>=0?"+":"")+f$(sess);
-  $("cFills").textContent=fills.toLocaleString();
-  $("cRoutes").textContent=routes;
-  $("cRoi").textContent=(sess>=0?"+":"")+((bal-start)/start*100).toFixed(1)+"%";
-  $("cRoi2").textContent=(sess>=0?"+":"")+((bal-start)/start*100).toFixed(1)+"%";
-  $("cEqNow").textContent=(sess>=0?"+":"")+f$(sess);
-  $("cWin").textContent=trades?Math.round(wins/trades*100)+"%":"—";
+/* ---- PERFORMANCE / WALLET ---- */
+let bal=rnd(12e6,22e6),start=bal,day=rnd(2e5,6e5),trades=rndi(15000,19000),wins=Math.round(trades*rnd(.7,.74)),big=rnd(4e5,7e5);
+const WAL="0x"+hx(4)+"…"+hx(4);
+function tickPerf(){
+  const d=rnd(-1600,2700);bal+=d;if(Math.random()<.5)trades++;if(Math.random()<.36)wins++;
+  if(Math.random()<.05){const w=rnd(3e5,9e5);if(w>big)big=w;}
+  day+=rnd(-900,1500);
+  $("pBal").textContent=f$(bal);
+  $("pNtr").textContent=trades.toLocaleString();
+  const wr=Math.round(wins/trades*100);
+  $("pWr").textContent=wr+"%";$("pWin").textContent=wr+"%";
+  $("pDay").textContent=(day>=0?"+":"")+f$(day);
+  $("pBig").textContent=f$(big);
+  $("pTrades").textContent=((bal-start)/start*100>=0?"+":"")+((bal-start)/start*100).toFixed(1)+"%";
+  $("pSharpe").textContent="Sharpe "+rnd(3.8,4.9).toFixed(2);
 }
 
-/* routing book (abstract price) */
-let MID=rnd(40000,90000);
-function tickBook(){
-  MID=Math.round(MID*(1+rnd(-0.0015,0.0016)));
-  let h="";for(let i=4;i>=1;i--)h+=`<div class="lr ask"><span class="px">${(MID+i*rndi(2,9)).toLocaleString()}</span><span class="sz">${rndi(2,60)}k</span></div>`;
-  h+=`<div class="mid">${MID.toLocaleString()}</div>`;
-  for(let i=1;i<=4;i++)h+=`<div class="lr bid"><span class="px">${(MID-i*rndi(2,9)).toLocaleString()}</span><span class="sz">${rndi(2,60)}k</span></div>`;
-  $("cBook").innerHTML=h;$("cSpr").textContent="SPREAD "+rnd(0.3,0.8).toFixed(1);
+/* ---- PULSE (hero) ---- */
+let round=rndi(7000,7300),cd=300,beat=Math.round(rnd(7.2e6,7.8e6)),cur=beat+rnd(-3000,3000);
+const PX=[];for(let i=0;i<120;i++)PX.push(cur+rnd(-4000,4000));
+function fmtCd(s){const m=Math.floor(s/60),ss=s%60;return (m<10?"0":"")+m+":"+(ss<10?"0":"")+ss;}
+function tickCd(){
+  cd--;if(cd<0){round++;cd=300;beat=Math.round(cur);}
+  $("pCd").innerHTML=fmtCd(cd)+"<small>MIN : SEC</small>";
+  $("pRound").textContent=round;
+  $("pCd").classList.toggle("urg",cd<=30);
+}
+function tickPulse(){
+  cur+=rnd(-2700,2800);PX.push(cur);if(PX.length>120)PX.shift();
+  const diff=cur-beat;
+  $("pBeat").textContent=f$(beat);
+  $("pCur").textContent=f$(cur);
+  const dEl=$("pCurD");dEl.textContent=(diff>=0?"+":"")+f$(diff);dEl.className=diff>=0?"g":"r";
+  const up=clamp(Math.round(50+diff/9000*22+rnd(-3,3)),8,92);
+  $("pUp").textContent=up+"%";$("pDn").textContent=(100-up)+"%";
+  const str=clamp(Math.round(Math.abs(diff)/9000*100+rnd(-6,6)),3,99);
+  $("pStr").textContent=str+"%";$("pStrBar").style.width=str+"%";
+  $("pBet").textContent=(diff>=0?"+":"")+f$(Math.abs(diff)*rnd(.4,.8));
+}
+function drawPulse(){const o=cv["cPulse"];if(!o||o.w===0)return;const{ctx,w:W,h:H}=o;ctx.clearRect(0,0,W,H);
+  if(PX.length<2)return;
+  let lo=Math.min(...PX,beat),hi=Math.max(...PX,beat);const pad=(hi-lo)*0.14||1;lo-=pad;hi+=pad;const r=hi-lo;
+  const AW=W-46,X=i=>i/(PX.length-1)*AW,Y=v=>H-((v-lo)/r)*(H-16)-8;
+  ctx.font="9px monospace";ctx.textAlign="left";
+  ctx.strokeStyle="rgba(255,255,255,.04)";ctx.fillStyle="rgba(220,210,180,.32)";
+  for(let i=0;i<=3;i++){const v=lo+r*(i/3),y=Y(v);ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(AW,y);ctx.stroke();ctx.fillText(fk(v),AW+4,y+3);}
+  const by=Y(beat);ctx.setLineDash([5,4]);ctx.strokeStyle="rgba(243,181,58,.55)";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(0,by);ctx.lineTo(AW,by);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle="rgba(243,181,58,.9)";ctx.fillText("TARGET",2,by-4);
+  const last=PX[PX.length-1],up=last>=beat;
+  ctx.beginPath();PX.forEach((v,i)=>{const x=X(i),y=Y(v);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});
+  ctx.shadowColor=up?"rgba(243,181,58,.7)":"rgba(255,95,95,.6)";ctx.shadowBlur=8;
+  ctx.strokeStyle=up?"#f3b53a":"#ff5f5f";ctx.lineWidth=1.8;ctx.stroke();ctx.shadowBlur=0;
+  ctx.lineTo(X(PX.length-1),H);ctx.lineTo(0,H);ctx.closePath();
+  ctx.fillStyle=up?"rgba(243,181,58,.10)":"rgba(255,95,95,.08)";ctx.fill();
+  const hx2=X(PX.length-1),hy=Y(last);ctx.fillStyle=up?"#ffd97a":"#ff8a8a";ctx.beginPath();ctx.arc(hx2,hy,2.6,0,7);ctx.fill();
 }
 
-/* throughput */
-const thru={hist:[]};
-function tickThru(){const v=rndi(800,2200);thru.hist.push(v);if(thru.hist.length>60)thru.hist.shift();$("cThruN").textContent=v.toLocaleString();}
-function drawThru(){const o=cv["cThru"];if(!o||o.w===0)return;const{ctx,w:W,h:H}=o;ctx.clearRect(0,0,W,H);if(thru.hist.length<2)return;
-  const mx=Math.max(...thru.hist,1),bw=W/thru.hist.length;
-  thru.hist.forEach((v,i)=>{const bh=v/mx*(H-2);ctx.fillStyle="rgba(34,224,163,"+(0.35+0.5*v/mx).toFixed(2)+")";ctx.fillRect(i*bw+0.5,H-bh,bw-1,bh);});}
-
-/* equity */
-const EQH=[0];
-function tickEq(){EQH.push(EQH[EQH.length-1]+rnd(-180,260));if(EQH.length>150)EQH.shift();}
-function drawEq(){const o=cv["cEq"];if(!o||o.w===0)return;const{ctx,w:W,h:H}=o;ctx.clearRect(0,0,W,H);if(EQH.length<2)return;
-  let lo=1e9,hi=-1e9;EQH.forEach(v=>{if(v<lo)lo=v;if(v>hi)hi=v;});const r=Math.max(1,hi-lo);
-  ctx.strokeStyle="rgba(255,255,255,.04)";for(let i=1;i<3;i++){const y=H/3*i;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
-  ctx.beginPath();EQH.forEach((v,i)=>{const x=i/(EQH.length-1)*W,y=H-((v-lo)/r)*(H-8)-4;i?ctx.lineTo(x,y):ctx.moveTo(x,y);});
-  ctx.shadowColor="rgba(34,224,163,.7)";ctx.shadowBlur=8;ctx.strokeStyle="#22e0a3";ctx.lineWidth=1.8;ctx.stroke();ctx.shadowBlur=0;
-  ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.closePath();ctx.fillStyle="rgba(34,224,163,.12)";ctx.fill();}
-
-/* nodes list */
-const REGS=["TYO","SGP","FRA","LDN","NYC","SYD","HKG","GRU","BOM","ICN"];
-function renderNodes(){const b=$("cNodes");let h="";const n=Math.min(REGS.length,7);
-  for(let i=0;i<n;i++){const warn=Math.random()<0.18;h+=`<div class="nr"><span class="d ${warn?"w":""}"></span><span class="nm">${REGS[i]}</span><span class="lt">${rndi(4,warn?120:60)}ms</span></div>`;}
-  b.innerHTML=h;$("cNodeN").textContent=n;}
-
-/* ===== GLOBE (hero) ===== */
-const TILT=0.42;let rot=0;
-const RINGS=[];
-(function buildRings(){
-  for(let li=-60;li<=60;li+=30){const lat=li*Math.PI/180,ring=[];for(let a=0;a<=360;a+=12){const lon=a*Math.PI/180;
-    ring.push([Math.cos(lat)*Math.cos(lon),Math.sin(lat),Math.cos(lat)*Math.sin(lon)]);}RINGS.push(ring);}
-  for(let lo=0;lo<360;lo+=30){const lon=lo*Math.PI/180,ring=[];for(let a=-90;a<=90;a+=12){const lat=a*Math.PI/180;
-    ring.push([Math.cos(lat)*Math.cos(lon),Math.sin(lat),Math.cos(lat)*Math.sin(lon)]);}RINGS.push(ring);}
-})();
-const GPTS=[];for(let i=0;i<48;i++){const ph=Math.acos(1-2*(i+0.5)/48),th=Math.PI*(1+Math.sqrt(5))*i;
-  GPTS.push({x:Math.sin(ph)*Math.cos(th),y:Math.cos(ph),z:Math.sin(ph)*Math.sin(th),hot:Math.random()<0.22});}
-const ARCS=[];function spawnArc(){const hot=GPTS.filter(p=>p.hot);if(hot.length<2)return;
-  ARCS.push({a:pick(hot),b:pick(hot),t:0});if(ARCS.length>6)ARCS.shift();}
-function rotpt(p){const cy=Math.cos(rot),sy=Math.sin(rot);let x=p.x*cy-p.z*sy,z=p.x*sy+p.z*cy,y=p.y;
-  const ct=Math.cos(TILT),st=Math.sin(TILT);const y2=y*ct-z*st,z2=y*st+z*ct;return [x,y2,z2];}
-function drawGlobe(t){const o=cv["cGlobe"];if(!o||o.w===0)return;const{ctx,w:W,h:H}=o;ctx.clearRect(0,0,W,H);
-  const cx=W/2,cy=H/2,R=Math.min(W,H)*0.42;
-  rot+=0.0045;
-  // wireframe rings
-  RINGS.forEach(ring=>{ctx.beginPath();let started=false;
-    ring.forEach(p=>{const[x,y,z]=rotpt({x:p[0],y:p[1],z:p[2]});const sx=cx+x*R,sy=cy-y*R;
-      if(!started){ctx.moveTo(sx,sy);started=true;}else ctx.lineTo(sx,sy);});
-    ctx.strokeStyle="rgba(34,224,163,.12)";ctx.lineWidth=1;ctx.stroke();});
-  // outer ring + scan
-  ctx.strokeStyle="rgba(34,224,163,.25)";ctx.lineWidth=1.4;ctx.beginPath();ctx.arc(cx,cy,R,0,7);ctx.stroke();
-  const sa=(t/1500)%(Math.PI*2);ctx.strokeStyle="rgba(122,255,214,.6)";ctx.lineWidth=2;ctx.beginPath();ctx.arc(cx,cy,R+3,sa,sa+0.7);ctx.stroke();
-  // arcs (great-circle-ish via lifted midpoint)
-  for(let k=ARCS.length-1;k>=0;k--){const A=ARCS[k];A.t+=0.02;if(A.t>=1){ARCS.splice(k,1);continue;}
-    const pa=rotpt(A.a),pb=rotpt(A.b);const ax=cx+pa[0]*R,ay=cy-pa[1]*R,bx=cx+pb[0]*R,by=cy-pb[1]*R;
-    const mx=(ax+bx)/2,my=(ay+by)/2-Math.hypot(ax-bx,ay-by)*0.28;
-    ctx.strokeStyle="rgba(34,224,163,.25)";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(ax,ay);ctx.quadraticCurveTo(mx,my,bx,by);ctx.stroke();
-    const u=A.t,px=(1-u)*(1-u)*ax+2*(1-u)*u*mx+u*u*bx,py=(1-u)*(1-u)*ay+2*(1-u)*u*my+u*u*by;
-    ctx.fillStyle="rgba(122,255,214,.95)";ctx.beginPath();ctx.arc(px,py,2.4,0,7);ctx.fill();}
-  // nodes
-  GPTS.forEach(p=>{const[x,y,z]=rotpt(p);const sx=cx+x*R,sy=cy-y*R;const front=z>0;
-    const a=front?0.9:0.28,rad=(p.hot?2.6:1.6)*(front?1:0.7);
-    ctx.fillStyle=(p.hot?"rgba(122,255,214,":"rgba(34,224,163,")+a.toFixed(2)+")";
-    if(p.hot&&front){ctx.shadowColor="rgba(34,224,163,.9)";ctx.shadowBlur=8;}
-    ctx.beginPath();ctx.arc(sx,sy,rad,0,7);ctx.fill();ctx.shadowBlur=0;});
+/* ---- MARKOV ---- */
+const MK={now:0,names:["BULL","BEAR","SIDE"],m:[[.84,.09,.07],[.11,.79,.10],[.22,.21,.57]],pi:[.47,.36,.16],ticks:rndi(16000,19000)};
+const renorm=row=>{const s=row.reduce((a,b)=>a+b,0);return row.map(v=>v/s);};
+function tickMarkov(){
+  MK.m=MK.m.map(row=>renorm(row.map(v=>clamp(v+rnd(-.02,.02),.02,.97))));
+  MK.pi=renorm(MK.pi.map(v=>clamp(v+rnd(-.012,.012),.05,.8)));
+  MK.ticks+=rndi(3,12);
+  if(Math.random()<.12)MK.now=rndi(0,2);
+  const cls=["st-bull","st-bear","st-side"];
+  let h="<tr><td></td><td>BULL</td><td>BEAR</td><td>SIDE</td></tr>";
+  MK.m.forEach((row,i)=>{h+=`<tr><td class="${cls[i]}">${MK.names[i]}</td>`+row.map((v,j)=>`<td class="${i===j?'dg':''}">${v.toFixed(2)}</td>`).join("")+"</tr>";});
+  $("mkMx").innerHTML=h;
+  $("mkNow").textContent=MK.names[MK.now];$("mkNow").className=cls[MK.now];
+  $("mkTicks").textContent=MK.ticks.toLocaleString();
+  $("mkP").textContent=MK.m[MK.now][MK.now].toFixed(2);
+  $("mkPi").textContent=MK.pi[MK.now].toFixed(2);
+  $("mkI").textContent=rnd(.4,.7).toFixed(2);
+  $("mkBv").textContent=MK.pi[0].toFixed(2);$("mkB").style.width=(MK.pi[0]*100).toFixed(0)+"%";
+  $("mkRv").textContent=MK.pi[1].toFixed(2);$("mkR").style.width=(MK.pi[1]*100).toFixed(0)+"%";
+  $("mkSv").textContent=MK.pi[2].toFixed(2);$("mkS").style.width=(MK.pi[2]*100).toFixed(0)+"%";
 }
-function tickGlobeMeta(){$("cUp").textContent=rnd(8,18).toFixed(1)+"Gb";$("cJit").textContent=rnd(0.2,1.8).toFixed(2)+"ms";
-  $("cPkt").textContent=fk(rnd(1.2e6,3e6));$("cRtt").textContent=rndi(28,72)+"ms";$("cHop").textContent=rndi(6,14);
-  if(Math.random()<0.1)$("cOrb").textContent=pick(["SYNC","LOCKED","TRACKING"]);}
+function drawMkGraph(t){const o=cv["cMkGraph"];if(!o||o.w===0)return;const{ctx,w:W,h:H}=o;ctx.clearRect(0,0,W,H);
+  const cx=W/2,cy=H/2,R=Math.min(W,H)*.36;
+  const P=[[cx,cy-R],[cx-R*.87,cy+R*.5],[cx+R*.87,cy+R*.5]];
+  const col=["#46d98a","#ff5f5f","#f3b53a"];
+  ctx.strokeStyle="rgba(255,255,255,.10)";ctx.lineWidth=1;
+  for(let i=0;i<3;i++)for(let j=i+1;j<3;j++){ctx.beginPath();ctx.moveTo(P[i][0],P[i][1]);ctx.lineTo(P[j][0],P[j][1]);ctx.stroke();}
+  for(let i=0;i<3;i++){const cur2=i===MK.now,pr=cur2?(1+Math.sin(t/300)*.22):1;
+    if(cur2){ctx.shadowColor=col[i];ctx.shadowBlur=10;}
+    ctx.fillStyle=col[i];ctx.beginPath();ctx.arc(P[i][0],P[i][1],(cur2?5:3.4)*pr,0,7);ctx.fill();ctx.shadowBlur=0;}
+}
 
-/* CLI log */
-const LOGMAX=18;
-function log(cls,txt){const d=document.createElement("div");d.className="ln "+cls;
-  d.innerHTML=`<span class="pr">&gt;</span> ${txt}`;
-  const r=$("cLog");r.insertBefore(d,r.firstChild);while(r.childElementCount>LOGMAX)r.removeChild(r.lastChild);}
+/* ---- MONTE CARLO ---- */
+const MC={pts:[],up:.76,mean:0,sig:0,conv:rndi(40,70)};
+function genMc(){MC.pts=[];const n=170,upBias=(MC.up-.5)*2;
+  for(let i=0;i<n;i++){const ang=-Math.PI/2 - upBias*0.6 + rnd(-1,1)*Math.PI*(0.9-0.32*Math.abs(upBias));
+    MC.pts.push({a:ang,r:Math.pow(Math.random(),.7),j:rnd(0,6.28)});}}
+function tickMc(){
+  MC.up=clamp(MC.up+rnd(-.04,.04),.55,.9);
+  MC.mean=(MC.up-.5)*rnd(120000,200000);
+  MC.sig=rnd(30000,52000);
+  MC.conv=clamp(MC.conv+rndi(2,9),0,99);if(MC.conv>=99)MC.conv=rndi(60,80);
+  $("mcUp").textContent=MC.up.toFixed(2);$("mcDn").textContent=(1-MC.up).toFixed(2);
+  $("mcMean").textContent=(MC.mean>=0?"+":"")+f$(MC.mean);
+  $("mcSig").textContent=f$(MC.sig);
+  $("mcConv").textContent=MC.conv+"% CONV";
+  genMc();
+}
+function drawMcPolar(t){const o=cv["cMcPolar"];if(!o||o.w===0)return;const{ctx,w:W,h:H}=o;ctx.clearRect(0,0,W,H);
+  const cx=W/2,cy=H/2,R=Math.min(W,H)*.46;
+  ctx.strokeStyle="rgba(255,255,255,.10)";
+  for(let k=1;k<=3;k++){ctx.setLineDash([2,4]);ctx.beginPath();ctx.arc(cx,cy,R*k/3,0,7);ctx.stroke();}
+  ctx.setLineDash([]);
+  ctx.strokeStyle="rgba(255,255,255,.06)";ctx.beginPath();ctx.moveTo(cx-R,cy);ctx.lineTo(cx+R,cy);ctx.moveTo(cx,cy-R);ctx.lineTo(cx,cy+R);ctx.stroke();
+  MC.pts.forEach(p=>{const jr=p.r+Math.sin(t/600+p.j)*.02,x=cx+Math.cos(p.a)*jr*R,y=cy+Math.sin(p.a)*jr*R;
+    ctx.fillStyle="rgba(255,91,176,"+(0.25+0.6*(1-p.r)).toFixed(2)+")";ctx.beginPath();ctx.arc(x,y,1.6,0,7);ctx.fill();});
+  const mu=-Math.PI/2-(MC.up-.5);ctx.strokeStyle="rgba(255,217,122,.85)";ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(mu)*R*.7,cy+Math.sin(mu)*R*.7);ctx.stroke();
+  ctx.fillStyle="#ffd97a";ctx.beginPath();ctx.arc(cx,cy,2,0,7);ctx.fill();
+}
+function drawMcHist(){const o=cv["cMcHist"];if(!o||o.w===0)return;const{ctx,w:W,h:H}=o;ctx.clearRect(0,0,W,H);
+  const N=26,bw=W/N,mid=N*(.5+(MC.up-.5)*.45);
+  for(let i=0;i<N;i++){const d=(i-mid)/(N*.22),hgt=Math.exp(-d*d/2)*(H-2);
+    ctx.fillStyle=i>=N/2?"rgba(70,217,138,.8)":"rgba(255,95,95,.7)";ctx.fillRect(i*bw+.6,H-hgt,bw-1.2,hgt);}
+}
+
+/* ---- PATTERN SCANNER candles ---- */
+function genCandles(bias){const a=[];let p=rnd(42,58);
+  for(let i=0;i<16;i++){const o=p,c=o+rnd(-3,3)+bias(i,16),hi=Math.max(o,c)+rnd(0,2),lo=Math.min(o,c)-rnd(0,2);a.push({o,h:hi,l:lo,c});p=c;}
+  return a;}
+const PAT={};
+function regenPat(){
+  PAT.cBos=genCandles((i,n)=>i>n*.5?1.1:.1);
+  PAT.cChoch=genCandles((i,n)=>i<n*.55?.9:-1.3);
+  PAT.cSweep=genCandles((i,n)=>i===n-4?-4:(i>n-4?2:.1));
+}
+regenPat();
+function drawCandles(id){const o=cv[id];if(!o||o.w===0)return;const{ctx,w:W,h:H}=o;ctx.clearRect(0,0,W,H);
+  const data=PAT[id];if(!data)return;let lo=1e9,hi=-1e9;data.forEach(d=>{lo=Math.min(lo,d.l);hi=Math.max(hi,d.h);});const r=(hi-lo)||1;
+  const cw=W/data.length,Y=v=>H-((v-lo)/r)*(H-6)-3;
+  data.forEach((d,i)=>{const x=i*cw+cw/2,up=d.c>=d.o;ctx.strokeStyle=up?"#46d98a":"#ff5f5f";ctx.fillStyle=up?"rgba(70,217,138,.85)":"rgba(255,95,95,.8)";
+    ctx.beginPath();ctx.moveTo(x,Y(d.h));ctx.lineTo(x,Y(d.l));ctx.stroke();
+    const bt=Y(Math.max(d.o,d.c)),bb=Y(Math.min(d.o,d.c));ctx.fillRect(x-cw*.3,bt,cw*.6,Math.max(1,bb-bt));});
+}
+function drawCandlesAll(){["cBos","cChoch","cSweep"].forEach(drawCandles);}
+function tickScan(){regenPat();drawCandlesAll();
+  $("scBosC").textContent=rndi(74,93)+"%";$("scChC").textContent=rndi(58,79)+"%";$("scSwC").textContent=rndi(80,97)+"%";}
+
+/* ---- CONVICTION / LOG ---- */
+const LOGMAX=16;
+function log(cls,txt){const d=document.createElement("div");d.className="ln "+cls;d.innerHTML='<span class="pr">&gt;</span> '+txt;
+  const r=$("pLog");r.insertBefore(d,r.firstChild);while(r.childElementCount>LOGMAX)r.removeChild(r.lastChild);}
 const NOISE=[
-  ()=>["ok",`route ${pick(REGS)}→${pick(REGS)} rtt=${rndi(20,70)}ms ok`],
-  ()=>["dim",`mesh.sync peers=${rndi(5,7)} drift=${rnd(0,0.8).toFixed(2)}ms`],
-  ()=>["ok",`fill @${MID.toLocaleString()} sz=${rnd(0.01,0.08).toFixed(2)} edge=${rnd(.1,.6).toFixed(2)}`],
-  ()=>["warn",`failover ${pick(REGS)} → backup link`],
-  ()=>["dim",`uplink ${rnd(8,18).toFixed(1)}Gb · jitter ${rnd(.2,1.5).toFixed(2)}ms`],
-  ()=>["ok",`order routed via ${pick(REGS)} hops=${rndi(6,12)}`]
+  ()=>["ok",`whale entered · ${f$(rnd(8e4,3e5))} stake · UP`],
+  ()=>["dim",`markov shift → ${pick(MK.names)} p=${rnd(.6,.9).toFixed(2)}`],
+  ()=>["ok",`mc converge ${rndi(60,95)}% · μ=${f$(rnd(2e4,9e4))}`],
+  ()=>["warn",`pattern ${pick(["BOS","CHoCH","SWEEP","FVG"])} conf ${rndi(72,96)}%`],
+  ()=>["dim",`tick feed ${rndi(800,2200)}/s · book depth ${rndi(40,120)}`],
+  ()=>["ok",`signals converged · order armed · ${f$(rnd(5e4,2e5))}`]
 ];
-function noiseTick(){const[a,b]=pick(NOISE)();log(a,b);setTimeout(noiseTick,rnd(550,1200));}
-function tradeTick(){trades++;const win=Math.random()<0.73;if(win)wins++;const pl=win?rnd(60,440):-rnd(40,220);sess+=pl;bal+=pl;
-  EQH.push(EQH[EQH.length-1]+pl);if(EQH.length>150)EQH.shift();}
+function noiseTick(){const[a,b]=pick(NOISE)();log(a,b);setTimeout(noiseTick,rnd(600,1300));}
 
 /* ticker */
-const TS=["NODE-01","NODE-02","MESH-A","MESH-B","EDGE-7","CORE-3","LINK-9","RELAY-2","HUB-NE","HUB-SW","SAT-4","GRID-X"];
-function buildTick(){const tr=$("cTick");let h="";for(let c=0;c<2;c++)TS.forEach(s=>{const up=Math.random()<0.6;
-  h+=`<span class="tick-it"><span class="s">${s}</span><span class="p">${rndi(40,99)}.${rndi(0,9)}%</span><span class="c ${up?"u":"d"}">${up?"▲":"▽"}${rnd(0.1,2).toFixed(2)}</span></span>`;});tr.innerHTML=h;}
+const TS=["IDX-01","FEED-A","FLOW-7","MESH-3","EDGE-9","NODE-2","SEQ-X","RANGE-5","VOL-8","DELTA-1","BOOK-4","TICK-6"];
+function buildTick(){const tr=$("pTick");let h="";for(let c=0;c<2;c++)TS.forEach(s=>{const up=Math.random()<.6;
+  h+=`<span class="tick-it"><span class="s">${s}</span><span class="p">${rndi(40,99)}.${rndi(0,9)}</span><span class="c ${up?'u':'d'}">${up?'▲':'▽'}${rnd(.1,2).toFixed(2)}</span></span>`;});tr.innerHTML=h;}
 
-let last=0;
-function frame(t){drawGlobe(t);drawThru();drawEq();requestAnimationFrame(frame);}
+/* RAF + kickoff */
+function frame(t){drawPulse();drawMcPolar(t);drawMcHist();drawMkGraph(t);requestAnimationFrame(frame);}
 function kickoff(){
-  sizeAll();tickWallet();tickBook();tickThru();renderNodes();tickGlobeMeta();buildTick();
-  for(let i=0;i<8;i++){const[a,b]=pick(NOISE)();log(a,b);}
-  for(let i=0;i<6;i++)tradeTick();
-  setInterval(tickWallet,1400);
-  setInterval(tickBook,160);
-  setInterval(tickThru,700);
-  setInterval(tickEq,900);
-  setInterval(tradeTick,1300);
-  setInterval(renderNodes,2600);
-  setInterval(tickGlobeMeta,1500);
-  setInterval(spawnArc,900);
-  setTimeout(noiseTick,400);
+  sizeAll();
+  $("pWal").textContent=WAL;
+  tickPerf();tickCd();tickPulse();tickMarkov();genMc();tickMc();tickScan();buildTick();
+  for(let i=0;i<7;i++){const[a,b]=pick(NOISE)();log(a,b);}
+  setInterval(tickCd,1000);
+  setInterval(tickPerf,1400);
+  setInterval(tickPulse,700);
+  setInterval(tickMarkov,2000);
+  setInterval(tickMc,1600);
+  setInterval(tickScan,3600);
+  setTimeout(noiseTick,500);
   requestAnimationFrame(frame);
 }
 window.addEventListener("resize",sizeAll);
 requestAnimationFrame(kickoff);
 
 /* mobile tabs */
-(function(){const views=document.getElementById("cgViews"),tabs=document.querySelectorAll(".cg-tab");
-  function setTab(n){views.dataset.tab=n;tabs.forEach(t=>t.classList.toggle("active",t.dataset.tab===n));
-    if(typeof sizeAll==="function")sizeAll();views.scrollTop=0;}
-  tabs.forEach(t=>t.addEventListener("click",()=>setTab(t.dataset.tab)));setTab("summary");})();
+(function(){const views=$("cgViews"),tabs=document.querySelectorAll(".cg-tab");
+  function setTab(n){views.dataset.tab=n;tabs.forEach(t=>t.classList.toggle("active",t.dataset.tab===n));sizeAll();views.scrollTop=0;}
+  tabs.forEach(t=>t.addEventListener("click",()=>setTab(t.dataset.tab)));setTab("pulse");})();
 
 /* gear */
 (function(){const btn=$("gearBtn"),menu=$("gearMenu");
