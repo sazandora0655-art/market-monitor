@@ -136,7 +136,7 @@
   .log .conv{background:rgba(255,45,155,.16);color:var(--mag)}
   .log .sys{background:rgba(255,255,255,.06);color:var(--dim)}
 
-  .fg-tabbar{display:none;grid-template-columns:repeat(4,1fr);gap:6px;flex:0 0 auto}
+  .fg-tabbar{display:none;grid-template-columns:repeat(3,1fr);gap:6px;flex:0 0 auto}
   .fg-tab{padding:11px 2px;text-align:center;background:var(--panel);border:1px solid var(--line);border-radius:4px;
     color:var(--dim);font-size:10px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;-webkit-tap-highlight-color:transparent}
   .fg-tab.active{color:var(--mag);border-color:var(--mag);background:linear-gradient(180deg,rgba(255,45,155,.12),transparent)}
@@ -145,7 +145,6 @@
     .h-force{height:62vh}
     #fgViews[data-tab="summary"] > .pnl:not([data-group="summary"]){display:none}
     #fgViews[data-tab="market"] > .pnl:not([data-group="market"]){display:none}
-    #fgViews[data-tab="graph"] > .pnl:not([data-group="graph"]){display:none}
     #fgViews[data-tab="data"] > .pnl:not([data-group="data"]){display:none}
   }
 
@@ -223,7 +222,7 @@
       <div class="pc"><div class="book" id="fgBook"></div></div>
     </div>
 
-    <div class="pnl glow h-streak" data-group="graph">
+    <div class="pnl glow h-streak" data-group="data">
       <div class="ph"><span>#1 OPERATOR · WIN STREAK</span><span class="r" id="fgStreakR">x0</span></div>
       <div class="pc">
         <div class="stk-big"><span id="fgStk">0</span> <small id="fgStkP">+0</small></div>
@@ -232,7 +231,7 @@
       </div>
     </div>
 
-    <div class="pnl h-force" data-group="graph">
+    <div class="pnl h-force" data-group="summary">
       <div class="ph"><span>RELATION FORCE GRAPH · 32 NODES</span><span class="r" id="fgFgState">CLUSTERING</span></div>
       <div class="pc" style="padding:0">
         <canvas id="fgForce"></canvas>
@@ -283,7 +282,6 @@
   <div class="fg-tabbar">
     <div class="fg-tab" data-tab="summary">SUMMARY</div>
     <div class="fg-tab" data-tab="market">MARKET</div>
-    <div class="fg-tab" data-tab="graph">GRAPH</div>
     <div class="fg-tab" data-tab="data">DATA</div>
   </div>
 </div>
@@ -404,17 +402,17 @@ function buildForce(){const o=cv["fgForce"];if(!o)return;const W=o.w,H=o.h;FN=[]
 }
 function spawnFP(){if(FE.length<1)return;FP.push({e:pick(FE),t:0});}
 function drawForce(t){const o=cv["fgForce"];if(!o||o.w===0)return;const{ctx,w:W,h:H}=o;ctx.clearRect(0,0,W,H);
-  FN.forEach(n=>{n.x+=Math.sin(t/2600+n.ph)*0.10;n.y+=Math.cos(t/3000+n.ph)*0.10;});
+  FN.forEach(n=>{n.x+=Math.sin(t/1700+n.ph)*0.15;n.y+=Math.cos(t/2000+n.ph)*0.15;});
   ctx.lineWidth=0.8;ctx.strokeStyle="rgba(228,230,242,.22)";FE.forEach(([i,j])=>{const a=FN[i],b=FN[j];ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();});
-  for(let k=FP.length-1;k>=0;k--){const p=FP[k];p.t+=0.02;if(p.t>=1){FP.splice(k,1);continue;}
+  for(let k=FP.length-1;k>=0;k--){const p=FP[k];p.t+=0.03;if(p.t>=1){FP.splice(k,1);continue;}
     const a=FN[p.e[0]],b=FN[p.e[1]];const x=a.x+(b.x-a.x)*p.t,y=a.y+(b.y-a.y)*p.t;
     ctx.strokeStyle="rgba(255,45,155,"+(0.6*(1-p.t))+")";ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(x,y);ctx.stroke();
     ctx.fillStyle="rgba(255,45,155,"+(0.9*(1-p.t))+")";ctx.beginPath();ctx.arc(x,y,2.4,0,7);ctx.fill();}
   const cx=W/2,cy=H/2,R=Math.min(W,H)*0.16;
   ctx.strokeStyle="rgba(255,255,255,.06)";ctx.lineWidth=2;ctx.beginPath();ctx.arc(cx,cy,R,0,7);ctx.stroke();
-  const a0=(t/1400)%(Math.PI*2);ctx.strokeStyle="rgba(255,45,155,.8)";ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(cx,cy,R,a0,a0+2.0);ctx.stroke();
+  const a0=(t/930)%(Math.PI*2);ctx.strokeStyle="rgba(255,45,155,.8)";ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(cx,cy,R,a0,a0+2.0);ctx.stroke();
   ctx.strokeStyle="rgba(70,214,255,.6)";ctx.beginPath();ctx.arc(cx,cy,R-6,-a0,-a0+1.3);ctx.stroke();
-  FN.forEach(n=>{const pulse=0.6+Math.sin(t/420+n.ph)*0.4;const col=CATS[n.cat];
+  FN.forEach(n=>{const pulse=0.6+Math.sin(t/280+n.ph)*0.4;const col=CATS[n.cat];
     ctx.shadowColor=col;ctx.shadowBlur=6+pulse*5;ctx.fillStyle=col;ctx.beginPath();ctx.arc(n.x,n.y,n.r+pulse*0.8,0,7);ctx.fill();ctx.shadowBlur=0;
     ctx.fillStyle="rgba(210,210,228,.65)";ctx.font="8px JetBrains Mono, monospace";ctx.fillText(n.label,n.x+n.r+3,n.y+2.5);});
 }
@@ -449,7 +447,7 @@ function kickoff(){
   setInterval(tickStreak,2600);
   setInterval(tradeTick,1300);
   setInterval(tickAn,1100);
-  setInterval(spawnFP,140);
+  setInterval(spawnFP,95);
   setTimeout(noiseTick,400);
   requestAnimationFrame(frame);
 }
