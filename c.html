@@ -239,9 +239,6 @@
     <div class="pnl h-pulse" data-group="pulse">
       <div class="ph"><span>5-MIN PULSE <i class="lvb">LIVE</i></span><span class="r" id="pBet">+¥0</span></div>
       <div class="pc pulse">
-        <div class="pulse-head">
-          <div class="pulse-cd" id="pCd">05:00<small>MIN : SEC</small></div>
-        </div>
         <div class="pulse-prices">
           <div><span>PRICE TO BEAT</span><b id="pBeat">¥0</b></div>
           <div><span>CURRENT</span><b id="pCur" class="acc">¥0</b></div>
@@ -362,12 +359,9 @@ function tickPerf(){
 /* ---- PULSE (hero) ---- */
 let round=rndi(7000,7300),cd=300,beat=Math.round(rnd(7.2e6,7.8e6)),cur=beat+rnd(-3000,3000);
 const PX=[];for(let i=0;i<120;i++)PX.push(cur+rnd(-4000,4000));
-function fmtCd(s){const m=Math.floor(s/60),ss=s%60;return (m<10?"0":"")+m+":"+(ss<10?"0":"")+ss;}
 function tickCd(){
   cd--;if(cd<0){round++;cd=300;beat=Math.round(cur);}
-  $("pCd").innerHTML=fmtCd(cd)+"<small>MIN : SEC</small>";
   $("pRound").textContent=round;
-  $("pCd").classList.toggle("urg",cd<=30);
 }
 function tickPulse(){
   cur+=rnd(-2700,2800);PX.push(cur);if(PX.length>120)PX.shift();
