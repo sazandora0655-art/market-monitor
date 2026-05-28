@@ -89,11 +89,13 @@
   .w-row span:first-child{color:var(--dim)}
   .w-tags{display:flex;gap:6px;margin-top:7px}
 
-  .cx{position:absolute;inset:0}
-  .c-px{position:absolute;top:34px;right:12px;font-size:18px;font-weight:700;color:var(--grn)}
-  .c-px.dn{color:var(--red)}
-  .c-meta{position:absolute;top:36px;left:12px;font-size:9px;color:var(--dim)}
-  .c-meta b{color:var(--txt)}
+  .charts{display:flex;flex-direction:row;height:100%}
+  .chartcell{flex:1;position:relative;min-width:0;border-left:1px solid var(--line)}
+  .chartcell:first-child{border-left:none}
+  .chartcell canvas{width:100%;height:100%}
+  .cc-tf{position:absolute;top:5px;left:8px;font-size:9px;color:var(--dim);letter-spacing:.12em}
+  .cc-px{position:absolute;top:5px;right:8px;font-size:13px;font-weight:700;color:var(--grn)}
+  .cc-px.dn{color:var(--red)}
 
   .book{font-size:10px;height:100%;display:flex;flex-direction:column;justify-content:center}
   .book .lr{display:flex;justify-content:space-between;padding:1px 2px}
@@ -127,14 +129,17 @@
   .an-cell .av{font-size:13px;font-weight:700}
   .an-cell canvas{position:absolute;left:4px;right:4px;bottom:3px;height:30px;width:auto}
 
-  .log{height:100%;overflow:hidden;font-size:10px;line-height:1.55}
-  .log .ln{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;animation:lin .3s}
   @keyframes lin{from{opacity:0;transform:translateX(-4px)}to{opacity:1;transform:none}}
-  .log .lv{display:inline-block;width:42px;text-align:center;border-radius:2px;margin-right:7px;font-size:8px;padding:1px 0;letter-spacing:.06em}
-  .log .win{background:rgba(43,217,122,.16);color:var(--grn)}
-  .log .in{background:rgba(70,214,255,.16);color:var(--cyan)}
-  .log .conv{background:rgba(255,45,155,.16);color:var(--mag)}
-  .log .sys{background:rgba(255,255,255,.06);color:var(--dim)}
+  .tl{height:100%;overflow:hidden;position:relative;padding-left:13px;font-size:10px}
+  .tl::before{content:"";position:absolute;left:3px;top:3px;bottom:3px;width:1px;background:var(--line)}
+  .tl-item{position:relative;display:flex;align-items:baseline;gap:9px;padding:3px 0;animation:lin .3s}
+  .tl-item .dot{position:absolute;left:-13px;top:5px;width:7px;height:7px;border-radius:50%;border:2px solid var(--bg)}
+  .tl-item .tt{color:var(--dim);font-size:9px;flex:0 0 50px;letter-spacing:.04em}
+  .tl-item .xx{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--txt)}
+  .tl-item.win .dot{background:var(--grn);box-shadow:0 0 6px var(--grn)} .tl-item.win .xx{color:var(--grn)}
+  .tl-item.conv .dot{background:var(--mag);box-shadow:0 0 6px var(--mag)}
+  .tl-item.in .dot{background:var(--cyan)}
+  .tl-item.sys .dot{background:var(--dim)} .tl-item.sys .xx{color:var(--dim)}
 
   .fg-tabbar{display:none;grid-template-columns:repeat(3,1fr);gap:6px;flex:0 0 auto}
   .fg-tab{padding:11px 2px;text-align:center;background:var(--panel);border:1px solid var(--line);border-radius:4px;
@@ -143,6 +148,11 @@
   @media (max-width:1024px), (pointer:coarse){
     .fg-tabbar{display:grid}
     .h-force{height:62vh}
+    .h-candle{height:auto}
+    .charts{flex-direction:column}
+    .chartcell{min-height:30vh;border-left:none;border-top:1px solid var(--line)}
+    .chartcell:first-child{border-top:none}
+    .cc-px{font-size:16px}
     #fgViews[data-tab="summary"] > .pnl:not([data-group="summary"]){display:none}
     #fgViews[data-tab="market"] > .pnl:not([data-group="market"]){display:none}
     #fgViews[data-tab="data"] > .pnl:not([data-group="data"]){display:none}
@@ -209,11 +219,13 @@
     </div>
 
     <div class="pnl h-candle" data-group="market">
-      <div class="ph"><span>PRIMARY · 5M DIRECTIONAL</span><span class="r" id="fgSpr">SPREAD 0.5</span></div>
+      <div class="ph"><span>PRIMARY · MULTI-STREAM</span><span class="r" id="fgSpr">SPREAD 0.5</span></div>
       <div class="pc" style="padding:0">
-        <div class="cx"><canvas id="fgChart"></canvas></div>
-        <div class="c-meta">O <b id="fgO">--</b> H <b id="fgH">--</b> L <b id="fgL">--</b></div>
-        <div class="c-px" id="fgPx">--</div>
+        <div class="charts" id="fgCharts">
+          <div class="chartcell" id="cc0"><canvas id="fgCh0"></canvas><div class="cc-tf">5M</div><div class="cc-px" id="fgPx0">--</div></div>
+          <div class="chartcell" id="cc1"><canvas id="fgCh1"></canvas><div class="cc-tf">15M</div><div class="cc-px" id="fgPx1">--</div></div>
+          <div class="chartcell" id="cc2"><canvas id="fgCh2"></canvas><div class="cc-tf">1H</div><div class="cc-px" id="fgPx2">--</div></div>
+        </div>
       </div>
     </div>
 
@@ -274,7 +286,7 @@
 
     <div class="pnl h-log" data-group="data">
       <div class="ph"><span>EXECUTION LOG · LIVE</span><span class="r">STREAM</span></div>
-      <div class="pc" style="padding:7px 10px"><div class="log" id="fgLog"></div></div>
+      <div class="pc" style="padding:7px 10px"><div class="tl" id="fgLog"></div></div>
     </div>
 
   </div>
@@ -298,7 +310,7 @@ const cv={};
 function sz(id){const c=$(id);if(!c)return;const dpr=Math.min(window.devicePixelRatio||1,2);
   const r=c.getBoundingClientRect();c.width=Math.max(1,r.width*dpr);c.height=Math.max(1,r.height*dpr);
   const x=c.getContext("2d");x.setTransform(dpr,0,0,dpr,0,0);cv[id]={w:r.width,h:r.height,ctx:x};}
-function sizeAll(){["fgChart","fgStkSpark","fgForce","fgEq","fgAc1","fgAc2","fgAc3","fgAc4"].forEach(sz);buildForce();}
+function sizeAll(){["fgCh0","fgCh1","fgCh2","fgStkSpark","fgForce","fgEq","fgAc1","fgAc2","fgAc3","fgAc4"].forEach(sz);buildForce();}
 
 function tickClock(){$("fgClock").textContent=new Date().toLocaleTimeString("en-GB",{hour12:false,timeZone:"Asia/Tokyo"});}
 setInterval(tickClock,1000);tickClock();
@@ -316,34 +328,37 @@ function tickWallet(){
   $("fgSeq").textContent=seq+" / "+rndi(250,290);
 }
 
-const PE={p:rnd(60000,90000),sig:0.0012,dr:0.00002,c:[],cur:null,sec:8,o:0,hi:-1e9,lo:1e9};
-function seed(){let p=PE.p*0.99;const n=performance.now();
+function mkE(p){return {p,sig:0.0012,dr:0.00002,c:[],cur:null,sec:8,o:p,hi:-1e9,lo:1e9};}
+const CH=[mkE(rnd(60000,90000)),mkE(rnd(60000,90000)),mkE(rnd(60000,90000))];
+let chN=2;
+function seedE(E){let p=E.p*0.99;const n=performance.now();E.c=[];
   for(let i=64;i>=1;i--){const s=0.004,o=p,h=p+Math.random()*s*p,l=p-Math.random()*s*p,cc=l+Math.random()*(h-l);
-    PE.c.push({o,h,l,c:cc,t:n-i*PE.sec*1000});p=cc+(Math.random()-0.48)*s*p*0.6;}
-  PE.p=Math.round(p);PE.o=PE.c[0].o;PE.hi=Math.max(...PE.c.map(x=>x.h));PE.lo=Math.min(...PE.c.map(x=>x.l));}
-function priceTick(){
-  const z=(Math.random()+Math.random()+Math.random()-1.5)/Math.sqrt(.75);
-  PE.p=Math.round(PE.p*(1+PE.dr+PE.sig*z));PE.hi=Math.max(PE.hi,PE.p);PE.lo=Math.min(PE.lo,PE.p);
+    E.c.push({o,h,l,c:cc,t:n-i*E.sec*1000});p=cc+(Math.random()-0.48)*s*p*0.6;}
+  E.p=Math.round(p);E.o=E.c[0].o;E.hi=Math.max(...E.c.map(x=>x.h));E.lo=Math.min(...E.c.map(x=>x.l));E.cur=null;}
+function tickE(E){const z=(Math.random()+Math.random()+Math.random()-1.5)/Math.sqrt(.75);
+  E.p=Math.round(E.p*(1+E.dr+E.sig*z));E.hi=Math.max(E.hi,E.p);E.lo=Math.min(E.lo,E.p);
   const n=performance.now();
-  if(!PE.cur)PE.cur={o:PE.p,h:PE.p,l:PE.p,c:PE.p,t:n};
-  else{PE.cur.c=PE.p;PE.cur.h=Math.max(PE.cur.h,PE.p);PE.cur.l=Math.min(PE.cur.l,PE.p);}
-  if(n-PE.cur.t>PE.sec*1000){PE.c.push(PE.cur);if(PE.c.length>110)PE.c.shift();PE.cur={o:PE.p,h:PE.p,l:PE.p,c:PE.p,t:n};}
-  const chg=PE.p-PE.o,px=$("fgPx");px.textContent="¥"+PE.p.toLocaleString();px.className="c-px"+(chg<0?" dn":"");
-  $("fgO").textContent=Math.round(PE.o).toLocaleString();$("fgH").textContent=Math.round(PE.hi).toLocaleString();$("fgL").textContent=Math.round(PE.lo).toLocaleString();
-  $("fgSpr").textContent="SPREAD "+rnd(0.3,0.8).toFixed(1);
-  renderBook();
+  if(!E.cur)E.cur={o:E.p,h:E.p,l:E.p,c:E.p,t:n};
+  else{E.cur.c=E.p;E.cur.h=Math.max(E.cur.h,E.p);E.cur.l=Math.min(E.cur.l,E.p);}
+  if(n-E.cur.t>E.sec*1000){E.c.push(E.cur);if(E.c.length>110)E.c.shift();E.cur={o:E.p,h:E.p,l:E.p,c:E.p,t:n};}}
+function priceTick(){
+  for(let i=0;i<chN;i++){const E=CH[i];tickE(E);const el=$("fgPx"+i);if(el){el.textContent="¥"+E.p.toLocaleString();el.className="cc-px"+((E.p-E.o)<0?" dn":"");}}
+  $("fgSpr").textContent="SPREAD "+rnd(0.3,0.8).toFixed(1);renderBook();
 }
-function renderBook(){let h="";for(let i=4;i>=1;i--)h+=`<div class="lr ask"><span class="px">${(PE.p+i*rndi(2,8)).toLocaleString()}</span><span class="sz">${rndi(2,60)}k</span></div>`;
-  h+=`<div class="mid">${PE.p.toLocaleString()}</div>`;
-  for(let i=1;i<=4;i++)h+=`<div class="lr bid"><span class="px">${(PE.p-i*rndi(2,8)).toLocaleString()}</span><span class="sz">${rndi(2,60)}k</span></div>`;
+function renderBook(){const P=CH[0].p;let h="";for(let i=4;i>=1;i--)h+=`<div class="lr ask"><span class="px">${(P+i*rndi(2,8)).toLocaleString()}</span><span class="sz">${rndi(2,60)}k</span></div>`;
+  h+=`<div class="mid">${P.toLocaleString()}</div>`;
+  for(let i=1;i<=4;i++)h+=`<div class="lr bid"><span class="px">${(P-i*rndi(2,8)).toLocaleString()}</span><span class="sz">${rndi(2,60)}k</span></div>`;
   $("fgBook").innerHTML=h;}
-function drawChart(){const o=cv["fgChart"];if(!o||o.w===0)return;const{ctx,w:W,h:H}=o;ctx.clearRect(0,0,W,H);
+function drawE(E,id){const o=cv[id];if(!o||o.w===0)return;const{ctx,w:W,h:H}=o;ctx.clearRect(0,0,W,H);
   ctx.strokeStyle="rgba(255,255,255,.04)";for(let i=1;i<5;i++){const y=H/5*i;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
-  const all=PE.c.concat(PE.cur?[PE.cur]:[]);if(all.length<2)return;let hi=-1e9,lo=1e9;all.forEach(c=>{if(c.h>hi)hi=c.h;if(c.l<lo)lo=c.l;});
-  const pad=(hi-lo)*0.15,yMax=hi+pad,yMin=lo-pad,cw=Math.max(2,W/(all.length+2)),y=p=>H-((p-yMin)/(yMax-yMin))*(H-20)-10;
-  ctx.strokeStyle="rgba(255,45,155,.5)";ctx.setLineDash([3,4]);ctx.beginPath();ctx.moveTo(0,y(PE.p));ctx.lineTo(W,y(PE.p));ctx.stroke();ctx.setLineDash([]);
+  const all=E.c.concat(E.cur?[E.cur]:[]);if(all.length<2)return;let hi=-1e9,lo=1e9;all.forEach(c=>{if(c.h>hi)hi=c.h;if(c.l<lo)lo=c.l;});
+  const pad=(hi-lo)*0.15,yMax=hi+pad,yMin=lo-pad,cw=Math.max(2,W/(all.length+2)),y=p=>H-((p-yMin)/(yMax-yMin))*(H-26)-13;
+  ctx.strokeStyle="rgba(255,45,155,.5)";ctx.setLineDash([3,4]);ctx.beginPath();ctx.moveTo(0,y(E.p));ctx.lineTo(W,y(E.p));ctx.stroke();ctx.setLineDash([]);
   all.forEach((c,i)=>{const x=4+i*cw+cw/2,up=c.c>=c.o;ctx.strokeStyle=up?"#2bd97a":"#ff4d5e";ctx.fillStyle=up?"rgba(43,217,122,.9)":"rgba(255,77,94,.9)";
     ctx.beginPath();ctx.moveTo(x,y(c.h));ctx.lineTo(x,y(c.l));ctx.stroke();const bw=Math.max(1.4,cw*0.66),yo=y(c.o),yc=y(c.c);ctx.fillRect(x-bw/2,Math.min(yo,yc),bw,Math.max(1,Math.abs(yo-yc)));});}
+function drawCharts(){for(let i=0;i<chN;i++)drawE(CH[i],"fgCh"+i);}
+function setChN(n){chN=Math.max(1,Math.min(3,n));for(let i=0;i<3;i++){const cc=$("cc"+i);if(cc)cc.style.display=i<chN?"":"none";}sizeAll();}
+function rotateCharts(){let n=chN+(Math.random()<0.5?-1:1);if(n<1)n=2;if(n>3)n=2;if(n>chN)seedE(CH[n-1]);setChN(n);setTimeout(rotateCharts,rnd(5000,15000));}
 
 const stk={n:rndi(3,9),hist:[]};
 function tickStreak(){stk.n=Math.max(0,stk.n+(Math.random()<0.7?1:-rndi(1,3)));
@@ -418,14 +433,15 @@ function drawForce(t){const o=cv["fgForce"];if(!o||o.w===0)return;const{ctx,w:W,
 }
 
 const LOGMAX=20;
-function log(lv,txt){const d=document.createElement("div");d.className="ln";
-  d.innerHTML=`<span class="lv ${lv}">${({win:"WIN",in:"IN",conv:"CONV",sys:"SYS"})[lv]||"SYS"}</span>${txt}`;
+function log(lv,txt){const d=document.createElement("div");d.className="tl-item "+lv;
+  const tm=new Date().toLocaleTimeString("en-GB",{hour12:false,timeZone:"Asia/Tokyo"});
+  d.innerHTML=`<span class="dot"></span><span class="tt">${tm}</span><span class="xx">${txt}</span>`;
   const r=$("fgLog");r.insertBefore(d,r.firstChild);while(r.childElementCount>LOGMAX)r.removeChild(r.lastChild);}
 const NOISE=[
   ()=>["sys",`feed.sync 5m frame lag=${rndi(2,18)}ms`],
   ()=>["conv",`convergence ${rndi(40,60)}% · skip`],
   ()=>["in",`flow netflow ${(rnd(-80,80)).toFixed(0)} units`],
-  ()=>["sys",`venue reprice mid=${PE.p.toLocaleString()} skew=${rnd(-.3,.3).toFixed(2)}`],
+  ()=>["sys",`venue reprice mid=${CH[0].p.toLocaleString()} skew=${rnd(-.3,.3).toFixed(2)}`],
   ()=>["conv",`signal aligned · edge ${rnd(.1,.6).toFixed(2)} · clean fill`],
   ()=>["in",`hedge cover ${rndi(8,30)}s · delta ${rnd(-.4,.4).toFixed(2)}`],
   ()=>["sys",`latency edge ${rnd(40,110).toFixed(0)}ms vs crowd`]
@@ -433,13 +449,13 @@ const NOISE=[
 function noiseTick(){const[a,b]=pick(NOISE)();log(a,b);setTimeout(noiseTick,rnd(550,1300));}
 
 let last=0;
-function frame(t){drawChart();drawStkSpark();drawForce(t);drawEq();
+function frame(t){drawCharts();drawStkSpark();drawForce(t);drawEq();
   drawBars("fgAc1",AN.a1,"rgba(255,45,155,ALPHA)");drawBars("fgAc2",AN.a2,"rgba(255,134,196,ALPHA)");
   drawBars("fgAc3",AN.a3,"rgba(43,217,122,ALPHA)");drawBars("fgAc4",AN.a4,"rgba(70,214,255,ALPHA)");
   requestAnimationFrame(frame);}
 
 function kickoff(){
-  sizeAll();seed();tickWallet();tickStreak();tickAn();renderBook();
+  CH.forEach(seedE);setChN(2);tickWallet();tickStreak();tickAn();renderBook();
   for(let i=0;i<8;i++){const[a,b]=pick(NOISE)();log(a,b);}
   for(let i=0;i<5;i++)tradeTick();
   setInterval(priceTick,150);
@@ -448,6 +464,7 @@ function kickoff(){
   setInterval(tradeTick,1300);
   setInterval(tickAn,1100);
   setInterval(spawnFP,95);
+  setTimeout(rotateCharts,rnd(5000,15000));
   setTimeout(noiseTick,400);
   requestAnimationFrame(frame);
 }
