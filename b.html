@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
-<meta name="theme-color" content="#100a1e">
+<meta name="theme-color" content="#191430">
 <meta name="color-scheme" content="dark">
 <meta name="robots" content="noindex,nofollow,noarchive">
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
@@ -11,9 +11,9 @@
 <style>
   :root{
     color-scheme:dark;
-    --bg:#100a1e; --panel:#191230; --panel2:#221a3e; --line:#352a55;
-    --txt:#e4def4; --dim:#8b81ad; --mag:#a877ff; --magd:#6b4fb0;
-    --grn:#3fe0a6; --red:#ff6b93; --cyan:#7aa6ff; --gold:#f7c948;
+    --bg:#191430; --panel:#231d3a; --panel2:#2c2545; --line:#3f3458;
+    --txt:#e8e3f6; --dim:#9990b5; --mag:#b294ff; --magd:#6b4fb0;
+    --grn:#46e3aa; --red:#ff7c9e; --cyan:#86afff; --gold:#f7c948;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%;background:var(--bg);color:var(--txt);
@@ -21,11 +21,11 @@
     -webkit-text-size-adjust:100%}
   body{overflow:hidden}
   body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:9999;
-    background:radial-gradient(ellipse at center,transparent 45%,rgba(7,2,18,.75) 100%)}
+    background:radial-gradient(ellipse at center,transparent 50%,rgba(10,6,24,.55) 100%)}
   body::after{content:"";position:fixed;inset:0;pointer-events:none;opacity:.04;z-index:9998;
     background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence baseFrequency='1.1' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>")}
 
-  #gate{position:fixed;inset:0;z-index:100000;background:radial-gradient(ellipse at center,#1c1338,#100a1e 80%);
+  #gate{position:fixed;inset:0;z-index:100000;background:radial-gradient(ellipse at center,#2a2150,#191430 80%);
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:24px;text-align:center;transition:opacity .35s}
   #gate.hide{opacity:0;pointer-events:none}
   #gate .g-brand{font-weight:700;letter-spacing:.18em;color:var(--mag);font-size:15px}
@@ -334,7 +334,13 @@ function tickWallet(){
 function mkE(i){return {p:50000,sig:0.0012,dr:0,c:[],cur:null,sec:8,o:50000,hi:-1e9,lo:1e9,type:["candle","area","bars"][i]};}
 const CH=[mkE(0),mkE(1),mkE(2)];
 let chN=2;
-function reinit(E){E.p=rnd(38000,98000);E.sig=rnd(0.0008,0.0028);E.dr=rnd(-0.00007,0.00009);seedE(E);}
+function reinit(E){E.p=rnd(38000,98000);const g=pick(["up","down","down","range","wild","calm"]);
+  if(g==="up"){E.dr=rnd(0.00004,0.00012);E.sig=rnd(0.0009,0.0016);}
+  else if(g==="down"){E.dr=rnd(-0.00012,-0.00004);E.sig=rnd(0.0009,0.0016);}
+  else if(g==="range"){E.dr=rnd(-0.00002,0.00002);E.sig=rnd(0.0011,0.0019);}
+  else if(g==="wild"){E.dr=rnd(-0.00007,0.00007);E.sig=rnd(0.0024,0.0038);}
+  else{E.dr=rnd(-0.00002,0.00002);E.sig=rnd(0.0006,0.0010);}
+  E.regime=g;seedE(E);}
 function seedE(E){let p=E.p*rnd(0.95,1.03);const n=performance.now();E.c=[];
   const vol=E.sig*rnd(2.2,4.2)+0.001,trend=E.dr*rnd(40,110);
   for(let i=64;i>=1;i--){const s=vol*(0.55+Math.random());const o=p,h=p+Math.random()*s*p,l=p-Math.random()*s*p,cc=l+Math.random()*(h-l);
