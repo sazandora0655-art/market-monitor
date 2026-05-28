@@ -223,7 +223,7 @@
       <div class="pc"><div class="book" id="fgBook"></div></div>
     </div>
 
-    <div class="pnl glow h-streak" data-group="summary">
+    <div class="pnl glow h-streak" data-group="graph">
       <div class="ph"><span>#1 OPERATOR · WIN STREAK</span><span class="r" id="fgStreakR">x0</span></div>
       <div class="pc">
         <div class="stk-big"><span id="fgStk">0</span> <small id="fgStkP">+0</small></div>
@@ -294,7 +294,7 @@ const $=id=>document.getElementById(id);
 const rnd=(a,b)=>a+Math.random()*(b-a);
 const rndi=(a,b)=>Math.floor(rnd(a,b+1));
 const pick=a=>a[Math.floor(Math.random()*a.length)];
-const f$=v=>(v<0?"-$":"$")+Math.abs(Math.round(v)).toLocaleString();
+const f$=v=>(v<0?"-¥":"¥")+Math.abs(Math.round(v)).toLocaleString();
 
 const cv={};
 function sz(id){const c=$(id);if(!c)return;const dpr=Math.min(window.devicePixelRatio||1,2);
@@ -302,7 +302,7 @@ function sz(id){const c=$(id);if(!c)return;const dpr=Math.min(window.devicePixel
   const x=c.getContext("2d");x.setTransform(dpr,0,0,dpr,0,0);cv[id]={w:r.width,h:r.height,ctx:x};}
 function sizeAll(){["fgChart","fgStkSpark","fgForce","fgEq","fgAc1","fgAc2","fgAc3","fgAc4"].forEach(sz);buildForce();}
 
-function tickClock(){$("fgClock").textContent=new Date().toISOString().substr(11,8)+" UTC";}
+function tickClock(){$("fgClock").textContent=new Date().toLocaleTimeString("en-GB",{hour12:false,timeZone:"Asia/Tokyo"});}
 setInterval(tickClock,1000);tickClock();
 
 let bal=rnd(120000,260000),start=bal,sess=0,trades=0,wins=0,seq=rndi(4,9);
@@ -330,7 +330,7 @@ function priceTick(){
   if(!PE.cur)PE.cur={o:PE.p,h:PE.p,l:PE.p,c:PE.p,t:n};
   else{PE.cur.c=PE.p;PE.cur.h=Math.max(PE.cur.h,PE.p);PE.cur.l=Math.min(PE.cur.l,PE.p);}
   if(n-PE.cur.t>PE.sec*1000){PE.c.push(PE.cur);if(PE.c.length>110)PE.c.shift();PE.cur={o:PE.p,h:PE.p,l:PE.p,c:PE.p,t:n};}
-  const chg=PE.p-PE.o,px=$("fgPx");px.textContent="$"+PE.p.toLocaleString();px.className="c-px"+(chg<0?" dn":"");
+  const chg=PE.p-PE.o,px=$("fgPx");px.textContent="¥"+PE.p.toLocaleString();px.className="c-px"+(chg<0?" dn":"");
   $("fgO").textContent=Math.round(PE.o).toLocaleString();$("fgH").textContent=Math.round(PE.hi).toLocaleString();$("fgL").textContent=Math.round(PE.lo).toLocaleString();
   $("fgSpr").textContent="SPREAD "+rnd(0.3,0.8).toFixed(1);
   renderBook();
@@ -370,7 +370,7 @@ function tradeTick(){
     const dir=Math.random()<0.5?"UP":"DOWN";
     EQH.push((EQH[EQH.length-1]||0)+pl);if(EQH.length>150)EQH.shift();
     addRec(dir==="UP"?"UP":"DN",rnd(0.5,0.62),pl);
-    log(win?"win":"conv",`#${seq++} ${dir} sz $${rnd(0.01,0.08).toFixed(2)} ${(rnd(50,58)).toFixed(1)}% ${win?"WIN":"reject"} ${f$(pl)}`);
+    log(win?"win":"conv",`#${seq++} ${dir} sz ${rnd(0.01,0.08).toFixed(2)} ${(rnd(50,58)).toFixed(1)}% ${win?"WIN":"reject"} ${f$(pl)}`);
   }
 }
 
@@ -400,12 +400,12 @@ function buildForce(){const o=cv["fgForce"];if(!o)return;const W=o.w,H=o.h;FN=[]
   const N=32;for(let i=0;i<N;i++){const cat=pick(CATKEYS);
     FN.push({label:LABELS[i%LABELS.length],cat,x:rnd(W*0.06,W*0.94),y:rnd(H*0.1,H*0.9),r:rnd(2.5,6.5),ph:rnd(0,6.28)});}
   for(let i=0;i<FN.length;i++)for(let j=i+1;j<FN.length;j++){
-    const d=Math.hypot(FN[i].x-FN[j].x,FN[i].y-FN[j].y);if(d<W*0.16&&Math.random()<0.5)FE.push([i,j]);}
+    const d=Math.hypot(FN[i].x-FN[j].x,FN[i].y-FN[j].y);if(d<W*0.2&&Math.random()<0.62)FE.push([i,j]);}
 }
 function spawnFP(){if(FE.length<1)return;FP.push({e:pick(FE),t:0});}
 function drawForce(t){const o=cv["fgForce"];if(!o||o.w===0)return;const{ctx,w:W,h:H}=o;ctx.clearRect(0,0,W,H);
   FN.forEach(n=>{n.x+=Math.sin(t/2600+n.ph)*0.10;n.y+=Math.cos(t/3000+n.ph)*0.10;});
-  ctx.lineWidth=1;FE.forEach(([i,j])=>{const a=FN[i],b=FN[j];ctx.strokeStyle="rgba(120,120,160,.08)";ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();});
+  ctx.lineWidth=0.8;ctx.strokeStyle="rgba(228,230,242,.22)";FE.forEach(([i,j])=>{const a=FN[i],b=FN[j];ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();});
   for(let k=FP.length-1;k>=0;k--){const p=FP[k];p.t+=0.02;if(p.t>=1){FP.splice(k,1);continue;}
     const a=FN[p.e[0]],b=FN[p.e[1]];const x=a.x+(b.x-a.x)*p.t,y=a.y+(b.y-a.y)*p.t;
     ctx.strokeStyle="rgba(255,45,155,"+(0.6*(1-p.t))+")";ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(x,y);ctx.stroke();
