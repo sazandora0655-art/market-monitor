@@ -135,6 +135,19 @@
   .log .conv{background:rgba(255,45,155,.16);color:var(--mag)}
   .log .sys{background:rgba(255,255,255,.06);color:var(--dim)}
 
+  .fg-tabbar{display:none;grid-template-columns:repeat(4,1fr);gap:6px;flex:0 0 auto}
+  .fg-tab{padding:11px 2px;text-align:center;background:var(--panel);border:1px solid var(--line);border-radius:4px;
+    color:var(--dim);font-size:10px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;-webkit-tap-highlight-color:transparent}
+  .fg-tab.active{color:var(--mag);border-color:var(--mag);background:linear-gradient(180deg,rgba(255,45,155,.12),transparent)}
+  @media (max-width:919px){
+    .fg-tabbar{display:grid}
+    .h-force{height:64vh}
+    #fgViews[data-tab="summary"] > .pnl:not([data-group="summary"]){display:none}
+    #fgViews[data-tab="market"] > .pnl:not([data-group="market"]){display:none}
+    #fgViews[data-tab="graph"] > .pnl:not([data-group="graph"]){display:none}
+    #fgViews[data-tab="data"] > .pnl:not([data-group="data"]){display:none}
+  }
+
   @media (min-width:920px){
     .fg-views{display:grid;overflow:auto;gap:7px;
       grid-template-columns:240px 1.55fr 220px 1.05fr;
@@ -182,9 +195,9 @@
     <div class="clock" id="fgClock">--:--:-- UTC</div>
   </div>
 
-  <div class="fg-views">
+  <div class="fg-views" id="fgViews" data-tab="summary">
 
-    <div class="pnl glow h-wallet">
+    <div class="pnl glow h-wallet" data-group="summary">
       <div class="ph"><span>WALLET</span><span class="r g">ACTIVE</span></div>
       <div class="pc">
         <div style="font-size:9px;color:var(--dim);letter-spacing:.12em">BALANCE</div>
@@ -195,7 +208,7 @@
       </div>
     </div>
 
-    <div class="pnl h-candle">
+    <div class="pnl h-candle" data-group="market">
       <div class="ph"><span>PRIMARY · 5M DIRECTIONAL</span><span class="r" id="fgSpr">SPREAD 0.5</span></div>
       <div class="pc" style="padding:0">
         <div class="cx"><canvas id="fgChart"></canvas></div>
@@ -204,12 +217,12 @@
       </div>
     </div>
 
-    <div class="pnl h-book">
+    <div class="pnl h-book" data-group="market">
       <div class="ph"><span>ORDER BOOK · CLOB</span><span class="r">DEPTH</span></div>
       <div class="pc"><div class="book" id="fgBook"></div></div>
     </div>
 
-    <div class="pnl glow h-streak">
+    <div class="pnl glow h-streak" data-group="summary">
       <div class="ph"><span>#1 OPERATOR · WIN STREAK</span><span class="r" id="fgStreakR">x0</span></div>
       <div class="pc">
         <div class="stk-big"><span id="fgStk">0</span> <small id="fgStkP">+0</small></div>
@@ -218,7 +231,7 @@
       </div>
     </div>
 
-    <div class="pnl h-force">
+    <div class="pnl h-force" data-group="graph">
       <div class="ph"><span>RELATION FORCE GRAPH · 32 NODES</span><span class="r" id="fgFgState">CLUSTERING</span></div>
       <div class="pc" style="padding:0">
         <canvas id="fgForce"></canvas>
@@ -232,7 +245,7 @@
       </div>
     </div>
 
-    <div class="pnl h-pnl">
+    <div class="pnl h-pnl" data-group="summary">
       <div class="ph"><span>P&amp;L TOTAL</span><span class="r g" id="fgRoi">+0%</span></div>
       <div class="pc">
         <div class="pnl-top"><span>SESSION CURVE</span><span class="v" id="fgPnlNow">+$0</span></div>
@@ -240,14 +253,14 @@
       </div>
     </div>
 
-    <div class="pnl h-recent">
+    <div class="pnl h-recent" data-group="data">
       <div class="ph"><span>RECENT FILLS</span><span class="r" id="fgRecN">0</span></div>
       <div class="pc" style="padding:5px 9px;overflow:auto">
         <table class="tbl"><thead><tr><th>DIR</th><th>MARK</th><th>PROB</th><th>P/L</th></tr></thead><tbody id="fgRecBody"></tbody></table>
       </div>
     </div>
 
-    <div class="pnl h-analytics">
+    <div class="pnl h-analytics" data-group="data">
       <div class="ph"><span>ANALYTICS</span><span class="r">5M</span></div>
       <div class="pc">
         <div class="an-grid">
@@ -259,11 +272,18 @@
       </div>
     </div>
 
-    <div class="pnl h-log">
+    <div class="pnl h-log" data-group="data">
       <div class="ph"><span>EXECUTION LOG · LIVE</span><span class="r">STREAM</span></div>
       <div class="pc" style="padding:7px 10px"><div class="log" id="fgLog"></div></div>
     </div>
 
+  </div>
+
+  <div class="fg-tabbar">
+    <div class="fg-tab" data-tab="summary">SUMMARY</div>
+    <div class="fg-tab" data-tab="market">MARKET</div>
+    <div class="fg-tab" data-tab="graph">GRAPH</div>
+    <div class="fg-tab" data-tab="data">DATA</div>
   </div>
 </div>
 
@@ -434,6 +454,15 @@ function kickoff(){
 }
 window.addEventListener("resize",sizeAll);
 requestAnimationFrame(kickoff);
+
+/* mobile bottom tabs */
+(function(){
+  const views=document.getElementById("fgViews"),tabs=document.querySelectorAll(".fg-tab");
+  function setTab(n){views.dataset.tab=n;tabs.forEach(t=>t.classList.toggle("active",t.dataset.tab===n));
+    if(typeof sizeAll==="function")sizeAll();views.scrollTop=0;}
+  tabs.forEach(t=>t.addEventListener("click",()=>setTab(t.dataset.tab)));
+  setTab("summary");
+})();
 
 (function(){const btn=$("gearBtn"),menu=$("gearMenu");
   btn.addEventListener("click",e=>{e.stopPropagation();menu.classList.toggle("open");});
