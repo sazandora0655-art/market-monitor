@@ -9,7 +9,7 @@
 <meta name="robots" content="noindex,nofollow,noarchive">
 <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <title>TRADING SYSTEM — MOBILE MONITOR</title>
-<script>try{var _t=localStorage.getItem("aee_theme");if(_t==="b")location.replace("b.html");else if(_t==="c")location.replace("c.html");}catch(e){}</script>
+<script>try{var _t=localStorage.getItem("aee_theme");if(_t==="b")location.replace("b.html?cb="+Date.now());else if(_t==="c")location.replace("c.html?cb="+Date.now());}catch(e){}</script>
 <style>
   :root{
     --bg:#06070b; --panel:#0b0d14; --panel2:#10131c; --line:#1c2030;
@@ -1204,7 +1204,7 @@ requestAnimationFrame(kickoff);
     var it=e.target.closest(".gm-i"); if(!it)return;
     var th=it.dataset.theme;
     try{localStorage.setItem("aee_theme",th);}catch(x){}
-    if(th!=="a") location.href=it.dataset.href;
+    if(th!=="a") location.href=it.dataset.href+"?cb="+Date.now();
     menu.classList.remove("open");btn.classList.remove("on");
   });
 })();
