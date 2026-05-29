@@ -61,6 +61,40 @@
   .gmenu .gm-i.active{color:var(--acc);font-weight:700}
   .gmenu .gm-i .dot{width:7px;height:7px;border-radius:50%;background:var(--line)}
   .gmenu .gm-i.active .dot{background:var(--acc);box-shadow:0 0 6px var(--acc)}
+  .gmenu .gm-tune{border-top:1px solid var(--line);color:var(--acc)}
+  .gmenu .gm-tune .dot{background:var(--acc);box-shadow:0 0 6px var(--acc)}
+
+  /* カスタム設定パネル（TUNE） */
+  .tune-ov{position:fixed;inset:0;z-index:95000;background:rgba(6,5,2,.74);backdrop-filter:blur(2px);
+    display:none;align-items:center;justify-content:center;padding:18px;-webkit-tap-highlight-color:transparent}
+  .tune-ov.open{display:flex}
+  .tune-box{width:100%;max-width:344px;background:var(--panel2);border:1px solid var(--acc);border-radius:8px;
+    box-shadow:0 20px 60px rgba(0,0,0,.7);padding:16px 16px 14px;max-height:88vh;overflow:auto}
+  .tune-h{display:flex;align-items:center;font-weight:700;letter-spacing:.1em;color:var(--acc);font-size:13px;margin-bottom:15px}
+  .tune-h span{color:var(--dim);font-weight:400;font-size:10px;margin-left:6px;letter-spacing:.14em}
+  .tune-x{margin-left:auto;background:none;border:none;color:var(--dim);font-size:23px;line-height:1;cursor:pointer;padding:0 2px}
+  .tune-x:hover{color:var(--acc)}
+  .tune-row{margin-bottom:15px}
+  .tune-row > label{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--txt);
+    letter-spacing:.06em;margin-bottom:8px;gap:8px}
+  .tune-row > label b{color:var(--acc);font-size:13px;white-space:nowrap}
+  .tune-sec{font-size:9px;letter-spacing:.16em;color:var(--dim);text-transform:uppercase;border-top:1px solid var(--line);
+    padding-top:13px;margin-bottom:11px}
+  .tune-box input[type=range]{width:100%;accent-color:var(--acc);height:24px;cursor:pointer}
+  .tune-mode{display:flex;gap:18px}
+  .tune-mode label{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--txt);cursor:pointer}
+  .tune-mode input{accent-color:var(--acc);cursor:pointer}
+  .tune-grid{display:grid;gap:9px;transition:opacity .2s}
+  .tune-grid.dis{opacity:.4;pointer-events:none}
+  .tune-grid label{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--dim);gap:10px}
+  .tune-grid input{flex:0 0 138px;background:var(--bg);border:1px solid var(--line);border-radius:4px;color:var(--txt);
+    font-family:inherit;font-size:12px;padding:7px 9px;outline:none;text-align:right}
+  .tune-grid input:focus{border-color:var(--acc)}
+  .tune-foot{display:flex;align-items:center;gap:12px;margin-top:16px;border-top:1px solid var(--line);padding-top:13px}
+  .tune-foot button{background:var(--panel);border:1px solid var(--line);color:var(--txt);border-radius:4px;
+    padding:8px 13px;font-family:inherit;font-size:11px;cursor:pointer;letter-spacing:.06em}
+  .tune-foot button:hover{border-color:var(--acc);color:var(--acc)}
+  .tune-note{font-size:9px;color:var(--dim);letter-spacing:.03em;line-height:1.4}
 
   .cg-app{display:flex;flex-direction:column;gap:7px;
     padding:calc(7px + env(safe-area-inset-top,0px)) 7px calc(7px + env(safe-area-inset-bottom,0px));height:100vh;height:100dvh}
@@ -208,12 +242,39 @@
   <div class="g-err" id="gateErr"></div>
 </div>
 
-<div class="gear" id="gearBtn" title="デザイン切替">&#9881;</div>
+<div class="gear" id="gearBtn" title="設定・デザイン切替">&#9881;</div>
 <div class="gmenu" id="gearMenu">
   <div class="gm-h">DESIGN THEME</div>
   <div class="gm-i" data-theme="a" data-href="index.html"><span class="dot"></span>A · NEON CYBER <span class="tag">dark</span></div>
   <div class="gm-i" data-theme="b" data-href="b.html"><span class="dot"></span>B · FORCE GRAPH <span class="tag">violet</span></div>
   <div class="gm-i active" data-theme="c" data-href="c.html"><span class="dot"></span>C · PULSE ENGINE <span class="tag">amber</span></div>
+  <div class="gm-i gm-tune" id="cgTuneOpen"><span class="dot"></span>カスタム設定 <span class="tag">TUNE</span></div>
+</div>
+
+<div class="tune-ov" id="cgTune">
+  <div class="tune-box">
+    <div class="tune-h">カスタム設定 <span>· LIVE TUNE</span><button class="tune-x" id="cgTuneX" title="閉じる" type="button">&times;</button></div>
+    <div class="tune-row">
+      <label>更新速度（グラフの動く速さ）<b id="cgSpeedV">1.0×</b></label>
+      <input type="range" id="cgSpeed" min="0.3" max="3" step="0.1" value="1">
+    </div>
+    <div class="tune-sec">表示数値</div>
+    <div class="tune-row tune-mode">
+      <label><input type="radio" name="cgNumMode" value="auto" checked> 自動</label>
+      <label><input type="radio" name="cgNumMode" value="manual"> 手動で固定</label>
+    </div>
+    <div class="tune-grid dis" id="cgNumGrid">
+      <label>口座残高 ¥<input type="number" id="cgN_bal" inputmode="numeric"></label>
+      <label>PNL / DAY ¥<input type="number" id="cgN_day" inputmode="numeric"></label>
+      <label>WIN RATE %<input type="number" id="cgN_wr" min="0" max="100"></label>
+      <label>Sharpe<input type="number" id="cgN_sh" step="0.01"></label>
+      <label>BIGGEST WIN ¥<input type="number" id="cgN_big" inputmode="numeric"></label>
+    </div>
+    <div class="tune-foot">
+      <button id="cgTuneReset" type="button">リセット</button>
+      <span class="tune-note">設定はこのブラウザに保存されます</span>
+    </div>
+  </div>
 </div>
 
 <div class="cg-app">
@@ -351,17 +412,20 @@ setInterval(tickClock,1000);tickClock();
 let bal=rnd(12e6,22e6),start=bal,day=rnd(2e5,6e5),trades=rndi(15000,19000),wins=Math.round(trades*rnd(.7,.74)),big=rnd(4e5,7e5);
 const WAL="0x"+hx(4)+"…"+hx(4);
 function tickPerf(){
-  const d=rnd(-1600,2700);bal+=d;if(Math.random()<.5)trades++;if(Math.random()<.36)wins++;
-  if(Math.random()<.05){const w=rnd(3e5,9e5);if(w>big)big=w;}
-  day+=rnd(-900,1500);
+  const man=CFG.numMode==="manual", n=CFG.nums||{};
+  if(man&&n.bal!=null)bal=n.bal; else bal+=rnd(-1600,2700);
+  if(man&&n.day!=null)day=n.day; else day+=rnd(-900,1500);
+  if(Math.random()<.5)trades++;if(Math.random()<.36)wins++;
+  if(man&&n.big!=null)big=n.big; else if(Math.random()<.05){const w=rnd(3e5,9e5);if(w>big)big=w;}
   $("pBal").textContent=f$(bal);
   $("pNtr").textContent=trades.toLocaleString();
-  const wr=Math.round(wins/trades*100);
+  const wr=(man&&n.wr!=null)?Math.round(n.wr):Math.round(wins/trades*100);
   $("pWr").textContent=wr+"%";$("pWin").textContent=wr+"%";
   $("pDay").textContent=(day>=0?"+":"")+f$(day);
   $("pBig").textContent=f$(big);
   $("pTrades").textContent=((bal-start)/start*100>=0?"+":"")+((bal-start)/start*100).toFixed(1)+"%";
-  $("pSharpe").textContent="Sharpe "+rnd(3.8,4.9).toFixed(2);
+  const sh=(man&&n.sh!=null)?n.sh:rnd(3.8,4.9);
+  $("pSharpe").textContent="Sharpe "+sh.toFixed(2);
 }
 
 /* ---- PULSE (hero) ---- */
@@ -507,19 +571,56 @@ const TS=["IDX-01","FEED-A","FLOW-7","MESH-3","EDGE-9","NODE-2","SEQ-X","RANGE-5
 function buildTick(){const tr=$("pTick");let h="";for(let c=0;c<2;c++)TS.forEach(s=>{const up=Math.random()<.6;
   h+=`<span class="tick-it"><span class="s">${s}</span><span class="p">${rndi(40,99)}.${rndi(0,9)}</span><span class="c ${up?'u':'d'}">${up?'▲':'▽'}${rnd(.1,2).toFixed(2)}</span></span>`;});tr.innerHTML=h;}
 
+/* ---- custom settings (TUNE) ---- */
+let CFG;
+try{CFG=Object.assign({speed:1,numMode:"auto",nums:{}},JSON.parse(localStorage.getItem("aee_c_cfg")||"{}"));}
+catch(e){CFG={speed:1,numMode:"auto",nums:{}};}
+function saveCfg(){try{localStorage.setItem("aee_c_cfg",JSON.stringify(CFG));}catch(e){}}
+const BASE_IV={perf:1400,pulse:700,markov:2000,mc:1600,scan:3600};
+const IVs={};
+function applySpeed(){const s=clamp(CFG.speed||1,.3,3);
+  for(const k in IVs)clearInterval(IVs[k]);
+  IVs.perf=setInterval(tickPerf,Math.round(BASE_IV.perf/s));
+  IVs.pulse=setInterval(tickPulse,Math.round(BASE_IV.pulse/s));
+  IVs.markov=setInterval(tickMarkov,Math.round(BASE_IV.markov/s));
+  IVs.mc=setInterval(tickMc,Math.round(BASE_IV.mc/s));
+  IVs.scan=setInterval(tickScan,Math.round(BASE_IV.scan/s));
+}
+const numOr=v=>{v=parseFloat(v);return isFinite(v)?v:null;};
+function tuneCommitNums(){CFG.nums={bal:numOr($("cgN_bal").value),day:numOr($("cgN_day").value),
+  wr:numOr($("cgN_wr").value),sh:numOr($("cgN_sh").value),big:numOr($("cgN_big").value)};}
+function tuneApplyManualBal(){if(CFG.numMode==="manual"&&CFG.nums&&CFG.nums.bal!=null){bal=CFG.nums.bal;start=bal;}}
+function tuneInitInputs(){const n=CFG.nums||{};
+  $("cgN_bal").value=n.bal!=null?n.bal:Math.round(bal);
+  $("cgN_day").value=n.day!=null?n.day:Math.round(day);
+  $("cgN_wr").value =n.wr!=null?n.wr:Math.round(wins/trades*100);
+  $("cgN_sh").value =n.sh!=null?n.sh:4.2;
+  $("cgN_big").value=n.big!=null?n.big:Math.round(big);
+  const r=document.querySelector('input[name=cgNumMode][value="'+(CFG.numMode||"auto")+'"]');if(r)r.checked=true;
+  $("cgNumGrid").classList.toggle("dis",CFG.numMode!=="manual");
+  $("cgSpeed").value=CFG.speed||1;$("cgSpeedV").textContent=(CFG.speed||1).toFixed(1)+"×";}
+function tuneOpen(){tuneInitInputs();$("cgTune").classList.add("open");}
+function tuneClose(){$("cgTune").classList.remove("open");}
+$("cgTuneX").addEventListener("click",tuneClose);
+$("cgTune").addEventListener("click",e=>{if(e.target===$("cgTune"))tuneClose();});
+$("cgSpeed").addEventListener("input",e=>{CFG.speed=parseFloat(e.target.value);$("cgSpeedV").textContent=CFG.speed.toFixed(1)+"×";saveCfg();applySpeed();});
+document.querySelectorAll('input[name=cgNumMode]').forEach(r=>r.addEventListener("change",e=>{
+  CFG.numMode=e.target.value;$("cgNumGrid").classList.toggle("dis",CFG.numMode!=="manual");
+  if(CFG.numMode==="manual"){tuneCommitNums();tuneApplyManualBal();}saveCfg();tickPerf();}));
+["cgN_bal","cgN_day","cgN_wr","cgN_sh","cgN_big"].forEach(id=>$(id).addEventListener("input",()=>{
+  tuneCommitNums();tuneApplyManualBal();saveCfg();if(CFG.numMode==="manual")tickPerf();}));
+$("cgTuneReset").addEventListener("click",()=>{CFG={speed:1,numMode:"auto",nums:{}};saveCfg();applySpeed();tuneInitInputs();tickPerf();});
+
 /* RAF + kickoff */
 function frame(t){drawPulse();drawMcPolar(t);drawMcHist();drawMkGraph(t);requestAnimationFrame(frame);}
 function kickoff(){
   sizeAll();
   $("pWal").textContent=WAL;
+  tuneApplyManualBal();
   tickPerf();tickCd();tickPulse();tickMarkov();genMc();tickMc();tickScan();buildTick();
   for(let i=0;i<7;i++){const[a,b]=pick(NOISE)();log(a,b);}
   setInterval(tickCd,1000);
-  setInterval(tickPerf,1400);
-  setInterval(tickPulse,700);
-  setInterval(tickMarkov,2000);
-  setInterval(tickMc,1600);
-  setInterval(tickScan,3600);
+  applySpeed();
   setTimeout(noiseTick,500);
   requestAnimationFrame(frame);
 }
@@ -535,7 +636,9 @@ requestAnimationFrame(kickoff);
 (function(){const btn=$("gearBtn"),menu=$("gearMenu");
   btn.addEventListener("click",e=>{e.stopPropagation();menu.classList.toggle("open");btn.classList.toggle("on",menu.classList.contains("open"));});
   document.addEventListener("click",()=>{menu.classList.remove("open");btn.classList.remove("on");});
-  menu.addEventListener("click",e=>{const it=e.target.closest(".gm-i");if(!it)return;const th=it.dataset.theme;
+  menu.addEventListener("click",e=>{const it=e.target.closest(".gm-i");if(!it)return;
+    if(it.id==="cgTuneOpen"){tuneOpen();menu.classList.remove("open");btn.classList.remove("on");return;}
+    const th=it.dataset.theme;if(!th)return;
     try{localStorage.setItem("aee_theme",th);}catch(x){}if(th!=="c")location.href=it.dataset.href+"?cb="+Date.now();menu.classList.remove("open");btn.classList.remove("on");});})();
 
 /* gate */
