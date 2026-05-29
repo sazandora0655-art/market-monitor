@@ -38,10 +38,18 @@
   #gate .g-err{color:var(--red);font-size:11px;height:14px}
   #gate .g-lock{font-size:22px;color:var(--acc);letter-spacing:.3em}
 
-  .gear{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));right:10px;z-index:90000;width:34px;height:34px;
-    border-radius:4px;background:var(--panel);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;
-    cursor:pointer;color:var(--txt);font-size:17px;-webkit-tap-highlight-color:transparent}
-  .gear:hover{border-color:var(--acc);color:var(--acc)}
+  /* C: PULSE ENGINE — HUDコーナーブラケット（控えめ→ホバー/展開でアンバー発光） */
+  .gear{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));right:10px;z-index:90000;width:36px;height:36px;
+    background:transparent;border:none;display:flex;align-items:center;justify-content:center;
+    cursor:pointer;color:var(--acc);font-size:15px;opacity:.5;
+    transition:opacity .25s,color .25s,transform .25s;-webkit-tap-highlight-color:transparent}
+  .gear::before,.gear::after{content:"";position:absolute;width:10px;height:10px;
+    border:1.5px solid rgba(243,181,58,.55);transition:border-color .25s,box-shadow .25s,width .25s,height .25s}
+  .gear::before{top:2px;left:2px;border-right:none;border-bottom:none}
+  .gear::after{bottom:2px;right:2px;border-left:none;border-top:none}
+  .gear:hover,.gear.on{opacity:1;color:var(--acc2);transform:scale(1.04)}
+  .gear:hover::before,.gear:hover::after,.gear.on::before,.gear.on::after{
+    border-color:var(--acc);box-shadow:0 0 8px rgba(243,181,58,.6);width:12px;height:12px}
   .gmenu{position:fixed;top:calc(48px + env(safe-area-inset-top,0px));right:10px;z-index:90000;background:var(--panel);
     border:1px solid var(--line);border-radius:4px;min-width:212px;box-shadow:0 10px 30px rgba(0,0,0,.6);overflow:hidden;display:none}
   .gmenu.open{display:block}
@@ -525,10 +533,10 @@ requestAnimationFrame(kickoff);
 
 /* gear */
 (function(){const btn=$("gearBtn"),menu=$("gearMenu");
-  btn.addEventListener("click",e=>{e.stopPropagation();menu.classList.toggle("open");});
-  document.addEventListener("click",()=>menu.classList.remove("open"));
+  btn.addEventListener("click",e=>{e.stopPropagation();menu.classList.toggle("open");btn.classList.toggle("on",menu.classList.contains("open"));});
+  document.addEventListener("click",()=>{menu.classList.remove("open");btn.classList.remove("on");});
   menu.addEventListener("click",e=>{const it=e.target.closest(".gm-i");if(!it)return;const th=it.dataset.theme;
-    try{localStorage.setItem("aee_theme",th);}catch(x){}if(th!=="c")location.href=it.dataset.href;menu.classList.remove("open");});})();
+    try{localStorage.setItem("aee_theme",th);}catch(x){}if(th!=="c")location.href=it.dataset.href;menu.classList.remove("open");btn.classList.remove("on");});})();
 
 /* gate */
 (function(){const EXPECTED="610a56280323723390c0aab513bfb3b030ed43539311425af77c87fd08e76740",KEY="aee_gate_ok";

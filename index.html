@@ -185,11 +185,17 @@
   #gate .g-lock{font-size:22px;color:var(--gold);letter-spacing:.3em}
 
   /* ===== テーマ切替ギア ===== */
+  /* A: NEON CYBER — 円形ネオンノード（控えめ→ホバー/展開で発光・回転） */
   .gear{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));right:10px;z-index:90000;
-    width:34px;height:34px;border-radius:4px;background:var(--panel);border:1px solid var(--line);
-    display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--txt);font-size:17px;
+    width:34px;height:34px;border-radius:50%;
+    background:radial-gradient(circle at 50% 50%,rgba(255,90,155,.12),transparent 70%);
+    border:1px solid rgba(255,90,155,.30);
+    display:flex;align-items:center;justify-content:center;cursor:pointer;
+    color:rgba(255,90,155,.72);font-size:16px;opacity:.6;
+    transition:opacity .25s,color .25s,border-color .25s,box-shadow .25s,transform .35s;
     -webkit-tap-highlight-color:transparent}
-  .gear:hover{border-color:var(--accent);color:var(--accent)}
+  .gear:hover,.gear.on{opacity:1;color:var(--accent);border-color:var(--accent);
+    box-shadow:0 0 12px rgba(255,90,155,.55),inset 0 0 9px rgba(255,90,155,.22);transform:rotate(60deg)}
   .gmenu{position:fixed;top:calc(48px + env(safe-area-inset-top,0px));right:10px;z-index:90000;
     background:var(--panel);border:1px solid var(--line);border-radius:4px;min-width:206px;
     box-shadow:0 10px 30px rgba(0,0,0,.55);overflow:hidden;display:none}
@@ -1192,14 +1198,14 @@ requestAnimationFrame(kickoff);
 /* ===== テーマ切替ギア ===== */
 (function(){
   var btn=document.getElementById("gearBtn"),menu=document.getElementById("gearMenu");
-  btn.addEventListener("click",function(e){e.stopPropagation();menu.classList.toggle("open");});
-  document.addEventListener("click",function(){menu.classList.remove("open");});
+  btn.addEventListener("click",function(e){e.stopPropagation();menu.classList.toggle("open");btn.classList.toggle("on",menu.classList.contains("open"));});
+  document.addEventListener("click",function(){menu.classList.remove("open");btn.classList.remove("on");});
   menu.addEventListener("click",function(e){
     var it=e.target.closest(".gm-i"); if(!it)return;
     var th=it.dataset.theme;
     try{localStorage.setItem("aee_theme",th);}catch(x){}
     if(th!=="a") location.href=it.dataset.href;
-    menu.classList.remove("open");
+    menu.classList.remove("open");btn.classList.remove("on");
   });
 })();
 

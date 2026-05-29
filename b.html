@@ -39,10 +39,17 @@
   #gate .g-err{color:var(--red);font-size:11px;height:14px}
   #gate .g-lock{font-size:22px;color:var(--mag);letter-spacing:.3em}
 
-  .gear{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));right:10px;z-index:90000;width:34px;height:34px;
-    border-radius:4px;background:var(--panel);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;
-    cursor:pointer;color:var(--txt);font-size:17px;-webkit-tap-highlight-color:transparent}
-  .gear:hover{border-color:var(--mag);color:var(--mag)}
+  /* B: FORCE GRAPH — グラフ節点風のひし形フレーム（控えめ→ホバー/展開で発光） */
+  .gear{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));right:10px;z-index:90000;width:36px;height:36px;
+    background:transparent;border:none;display:flex;align-items:center;justify-content:center;
+    cursor:pointer;color:var(--mag);font-size:16px;opacity:.5;
+    transition:opacity .25s,color .25s;-webkit-tap-highlight-color:transparent}
+  .gear::before{content:"";position:absolute;inset:5px;transform:rotate(45deg);border-radius:6px;
+    border:1px solid rgba(180,145,255,.42);background:rgba(180,145,255,.06);
+    transition:border-color .25s,box-shadow .25s,background .25s}
+  .gear:hover,.gear.on{opacity:1;color:#d7c4ff}
+  .gear:hover::before,.gear.on::before{border-color:var(--mag);background:rgba(180,145,255,.12);
+    box-shadow:0 0 12px rgba(180,145,255,.5)}
   .gmenu{position:fixed;top:calc(48px + env(safe-area-inset-top,0px));right:10px;z-index:90000;background:var(--panel);
     border:1px solid var(--line);border-radius:4px;min-width:206px;box-shadow:0 10px 30px rgba(0,0,0,.6);overflow:hidden;display:none}
   .gmenu.open{display:block}
@@ -505,10 +512,10 @@ requestAnimationFrame(kickoff);
 })();
 
 (function(){const btn=$("gearBtn"),menu=$("gearMenu");
-  btn.addEventListener("click",e=>{e.stopPropagation();menu.classList.toggle("open");});
-  document.addEventListener("click",()=>menu.classList.remove("open"));
+  btn.addEventListener("click",e=>{e.stopPropagation();menu.classList.toggle("open");btn.classList.toggle("on",menu.classList.contains("open"));});
+  document.addEventListener("click",()=>{menu.classList.remove("open");btn.classList.remove("on");});
   menu.addEventListener("click",e=>{const it=e.target.closest(".gm-i");if(!it)return;const th=it.dataset.theme;
-    try{localStorage.setItem("aee_theme",th);}catch(x){}if(th!=="b")location.href=it.dataset.href;menu.classList.remove("open");});})();
+    try{localStorage.setItem("aee_theme",th);}catch(x){}if(th!=="b")location.href=it.dataset.href;menu.classList.remove("open");btn.classList.remove("on");});})();
 
 (function(){const EXPECTED="610a56280323723390c0aab513bfb3b030ed43539311425af77c87fd08e76740",KEY="aee_gate_ok";
   function sha256(ascii){function rr(v,a){return (v>>>a)|(v<<(32-a));}var mp=Math.pow,maxWord=mp(2,32),res="",words=[],i,j;var bitLen=ascii.length*8;
