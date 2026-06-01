@@ -118,7 +118,7 @@
   .pnl .pc{flex:1;min-height:0;padding:9px 11px;position:relative}
   canvas{display:block;width:100%;height:100%}
 
-  .h-perf{height:176px} .h-pulse{height:360px} .h-markov{height:316px} .h-mc{height:328px} .h-scan{height:160px} .h-log{height:150px}
+  .h-perf{height:204px} .h-pulse{height:360px} .h-markov{height:316px} .h-mc{height:328px} .h-scan{height:160px} .h-log{height:150px}
 
   /* perf / wallet */
   .perf{display:flex;flex-direction:column;gap:6px}
@@ -128,6 +128,12 @@
   .perf-grid>div{display:flex;justify-content:space-between;font-size:10px;border-bottom:1px dashed rgba(255,255,255,.05);padding-bottom:3px}
   .perf-grid span{color:var(--dim)} .perf-grid b{color:var(--txt)} .perf-grid b.g{color:var(--grn)}
   .perf-wal{font-size:9px;color:var(--dim);margin-top:2px;letter-spacing:.04em} .perf-wal b{color:var(--acc2)}
+  .perf-pnl{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .perf-pnl > b{font-size:17px;font-weight:700;color:var(--grn);line-height:1} .perf-pnl > b.r{color:var(--red)}
+  .pnl-tabs{display:flex;gap:3px}
+  .pnl-tabs button{font:inherit;font-size:9px;letter-spacing:.08em;color:var(--dim);background:transparent;border:1px solid var(--line);border-radius:3px;padding:2px 7px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+  .pnl-tabs button.on{color:#0c0c0c;background:var(--acc);border-color:var(--acc);font-weight:700}
+  .perf-grid .span2{grid-column:1/-1}
 
   /* pulse hero */
   .pulse{display:flex;flex-direction:column;gap:7px;height:100%}
@@ -265,6 +271,8 @@
     <div class="tune-grid dis" id="cgNumGrid">
       <label>口座残高 ¥<input type="number" id="cgN_bal" inputmode="numeric"></label>
       <label>PNL / DAY ¥<input type="number" id="cgN_day" inputmode="numeric"></label>
+      <label>PNL / WEEK ¥<input type="number" id="cgN_week" inputmode="numeric"></label>
+      <label>PNL / MONTH ¥<input type="number" id="cgN_month" inputmode="numeric"></label>
       <label>WIN RATE %<input type="number" id="cgN_wr" min="0" max="100"></label>
       <label>Sharpe<input type="number" id="cgN_sh" step="0.01"></label>
       <label>BIGGEST WIN ¥<input type="number" id="cgN_big" inputmode="numeric"></label>
@@ -292,12 +300,19 @@
       <div class="ph"><span>ENGINE · LIVE PNL</span><span class="r">ALL-TIME</span></div>
       <div class="pc perf">
         <div class="perf-bal" id="pBal">¥0</div>
+        <div class="perf-pnl">
+          <b id="pPnl">+¥0</b>
+          <div class="pnl-tabs" id="pnlTabs">
+            <button type="button" data-pd="day" class="on">DAY</button>
+            <button type="button" data-pd="week">WEEK</button>
+            <button type="button" data-pd="month">MONTH</button>
+          </div>
+        </div>
         <div class="perf-sub">realised · all-time · <b id="pTrades">0.0%</b> · <b id="pSharpe">Sharpe 0.00</b></div>
         <div class="perf-grid">
           <div><span>TRADES</span><b id="pNtr">0</b></div>
           <div><span>WIN RATE</span><b id="pWr" class="g">0%</b></div>
-          <div><span>PNL / DAY</span><b id="pDay">¥0</b></div>
-          <div><span>BIGGEST WIN</span><b id="pBig" class="g">¥0</b></div>
+          <div class="span2"><span>BIGGEST WIN</span><b id="pBig" class="g">¥0</b></div>
         </div>
         <div class="perf-wal"><span>WALLET</span> <b id="pWal">0x…</b> · NET LIVE</div>
       </div>
@@ -404,18 +419,22 @@ function sizeAll(){CANV.forEach(sz);drawCandlesAll();}
 
 /* ---- PERFORMANCE / WALLET ---- */
 let bal=rnd(12e6,22e6),start=bal,day=rnd(2e5,6e5),trades=rndi(15000,19000),wins=Math.round(trades*rnd(.7,.74)),big=rnd(4e5,7e5);
+let week=day*rnd(4.2,6.4),month=day*rnd(18,24);
 const WAL="0x"+hx(4)+"…"+hx(4);
 function tickPerf(){
   const man=CFG.numMode==="manual", n=CFG.nums||{};
   if(man&&n.bal!=null)bal=n.bal; else bal+=rnd(-1600,2700);
   if(man&&n.day!=null)day=n.day; else day+=rnd(-900,1500);
+  if(man&&n.week!=null)week=n.week; else week+=rnd(-3500,5200);
+  if(man&&n.month!=null)month=n.month; else month+=rnd(-9000,14000);
   if(Math.random()<.5)trades++;if(Math.random()<.36)wins++;
   if(man&&n.big!=null)big=n.big; else if(Math.random()<.05){const w=rnd(3e5,9e5);if(w>big)big=w;}
   $("pBal").textContent=f$(bal);
   $("pNtr").textContent=trades.toLocaleString();
   const wr=(man&&n.wr!=null)?Math.round(n.wr):Math.round(wins/trades*100);
   $("pWr").textContent=wr+"%";$("pWin").textContent=wr+"%";
-  $("pDay").textContent=(day>=0?"+":"")+f$(day);
+  const pd=CFG.pnlPeriod||"day";let pv=({day:day,week:week,month:month})[pd];if(pv==null)pv=day;
+  const pe=$("pPnl");pe.textContent=(pv>=0?"+":"")+f$(pv);pe.className=pv>=0?"":"r";
   $("pBig").textContent=f$(big);
   $("pTrades").textContent=((bal-start)/start*100>=0?"+":"")+((bal-start)/start*100).toFixed(1)+"%";
   const sh=(man&&n.sh!=null)?n.sh:rnd(3.8,4.9);
@@ -565,8 +584,8 @@ function buildTick(){const tr=$("pTick");let h="";for(let c=0;c<2;c++)TS.forEach
 
 /* ---- custom settings (TUNE) ---- */
 let CFG;
-try{CFG=Object.assign({speed:1,numMode:"auto",nums:{}},JSON.parse(localStorage.getItem("aee_c_cfg")||"{}"));}
-catch(e){CFG={speed:1,numMode:"auto",nums:{}};}
+try{CFG=Object.assign({speed:1,numMode:"auto",pnlPeriod:"day",nums:{}},JSON.parse(localStorage.getItem("aee_c_cfg")||"{}"));}
+catch(e){CFG={speed:1,numMode:"auto",pnlPeriod:"day",nums:{}};}
 function saveCfg(){try{localStorage.setItem("aee_c_cfg",JSON.stringify(CFG));}catch(e){}}
 const BASE_IV={perf:1400,pulse:700,markov:2000,mc:1600,scan:3600};
 const IVs={};
@@ -580,11 +599,14 @@ function applySpeed(){const s=clamp(CFG.speed||1,.3,3);
 }
 const numOr=v=>{v=parseFloat(v);return isFinite(v)?v:null;};
 function tuneCommitNums(){CFG.nums={bal:numOr($("cgN_bal").value),day:numOr($("cgN_day").value),
+  week:numOr($("cgN_week").value),month:numOr($("cgN_month").value),
   wr:numOr($("cgN_wr").value),sh:numOr($("cgN_sh").value),big:numOr($("cgN_big").value)};}
 function tuneApplyManualBal(){if(CFG.numMode==="manual"&&CFG.nums&&CFG.nums.bal!=null){bal=CFG.nums.bal;start=bal;}}
 function tuneInitInputs(){const n=CFG.nums||{};
   $("cgN_bal").value=n.bal!=null?n.bal:Math.round(bal);
   $("cgN_day").value=n.day!=null?n.day:Math.round(day);
+  $("cgN_week").value=n.week!=null?n.week:Math.round(week);
+  $("cgN_month").value=n.month!=null?n.month:Math.round(month);
   $("cgN_wr").value =n.wr!=null?n.wr:Math.round(wins/trades*100);
   $("cgN_sh").value =n.sh!=null?n.sh:4.2;
   $("cgN_big").value=n.big!=null?n.big:Math.round(big);
@@ -599,9 +621,14 @@ $("cgSpeed").addEventListener("input",e=>{CFG.speed=parseFloat(e.target.value);$
 document.querySelectorAll('input[name=cgNumMode]').forEach(r=>r.addEventListener("change",e=>{
   CFG.numMode=e.target.value;$("cgNumGrid").classList.toggle("dis",CFG.numMode!=="manual");
   if(CFG.numMode==="manual"){tuneCommitNums();tuneApplyManualBal();}saveCfg();tickPerf();}));
-["cgN_bal","cgN_day","cgN_wr","cgN_sh","cgN_big"].forEach(id=>$(id).addEventListener("input",()=>{
+["cgN_bal","cgN_day","cgN_week","cgN_month","cgN_wr","cgN_sh","cgN_big"].forEach(id=>$(id).addEventListener("input",()=>{
   tuneCommitNums();tuneApplyManualBal();saveCfg();if(CFG.numMode==="manual")tickPerf();}));
-$("cgTuneReset").addEventListener("click",()=>{CFG={speed:1,numMode:"auto",nums:{}};saveCfg();applySpeed();tuneInitInputs();tickPerf();});
+$("cgTuneReset").addEventListener("click",()=>{CFG={speed:1,numMode:"auto",pnlPeriod:"day",nums:{}};saveCfg();applySpeed();tuneInitInputs();tickPerf();});
+
+/* PNL period tabs */
+function syncPnlTabs(){document.querySelectorAll('#pnlTabs button').forEach(b=>b.classList.toggle('on',b.dataset.pd===(CFG.pnlPeriod||"day")));}
+document.querySelectorAll('#pnlTabs button').forEach(btn=>btn.addEventListener('click',()=>{CFG.pnlPeriod=btn.dataset.pd;saveCfg();syncPnlTabs();tickPerf();}));
+syncPnlTabs();
 
 /* RAF + kickoff */
 function frame(t){drawPulse();drawMcPolar(t);drawMcHist();drawMkGraph(t);requestAnimationFrame(frame);}
