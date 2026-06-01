@@ -107,7 +107,6 @@
   .cg-top .dot{width:7px;height:7px;border-radius:50%;background:var(--acc);box-shadow:0 0 8px var(--acc);animation:pl 2s infinite}
   @keyframes pl{0%,100%{opacity:1}50%{opacity:.4}}
   .cg-top .spacer{flex:1}
-  .cg-top .clock{color:var(--acc);font-size:12px;letter-spacing:.06em}
   .tag{font-size:9px;letter-spacing:.1em;padding:2px 7px;border-radius:2px;background:rgba(243,181,58,.14);color:var(--acc2)}
 
   .cg-views{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;gap:7px}
@@ -285,7 +284,6 @@
     <div class="it">ROUND <b id="pRound">0</b></div>
     <div class="spacer"></div>
     <div class="it">WIN <b id="pWin">—</b></div>
-    <div class="clock" id="pClock">--:--:--</div>
   </div>
 
   <div class="cg-views" id="cgViews" data-tab="pulse">
@@ -403,10 +401,6 @@ function sz(id){const c=$(id);if(!c)return;const dpr=Math.min(window.devicePixel
   const x=c.getContext("2d");x.setTransform(dpr,0,0,dpr,0,0);cv[id]={w:r.width,h:r.height,ctx:x};}
 const CANV=["cPulse","cMcPolar","cMcHist","cMkGraph","cBos","cChoch","cSweep"];
 function sizeAll(){CANV.forEach(sz);drawCandlesAll();}
-
-/* clock (JST) */
-function tickClock(){$("pClock").textContent=new Date().toLocaleTimeString("en-GB",{hour12:false,timeZone:"Asia/Tokyo"});}
-setInterval(tickClock,1000);tickClock();
 
 /* ---- PERFORMANCE / WALLET ---- */
 let bal=rnd(12e6,22e6),start=bal,day=rnd(2e5,6e5),trades=rndi(15000,19000),wins=Math.round(trades*rnd(.7,.74)),big=rnd(4e5,7e5);
