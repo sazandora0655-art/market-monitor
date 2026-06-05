@@ -124,7 +124,7 @@
   canvas{display:block;width:100%;height:100%}
 
   .h-wallet{height:148px} .h-candle{height:148px} .h-book{height:148px} .h-streak{height:148px}
-  .h-force{height:330px} .h-pnl{height:190px} .h-recent{height:190px} .h-analytics{height:190px} .h-log{height:150px}
+  .h-force{height:330px} .h-pnl{height:272px} .h-recent{height:190px} .h-analytics{height:190px} .h-log{height:150px}
 
   .w-big{font-size:30px;font-weight:700;color:var(--grn);line-height:1;margin:3px 0}
   .w-row{display:flex;justify-content:space-between;font-size:10.5px;margin-top:5px;color:var(--txt)}
@@ -161,6 +161,25 @@
   .pnl-top .v{font-weight:700;color:var(--grn)}
   .eq-c{position:absolute;left:10px;right:10px;bottom:8px;top:40px}
 
+  /* 5-MIN PULSE (Theme C port, violet) */
+  .pulse{display:flex;flex-direction:column;gap:7px;height:100%}
+  .pulse-prices{display:flex;gap:12px;align-items:center;flex-wrap:nowrap}
+  .pulse-prices>div{display:flex;flex-direction:column}
+  .pulse-prices span{font-size:8px;color:var(--dim);letter-spacing:.12em}
+  .pulse-prices b{font-size:15px;color:var(--txt)}
+  .pulse-prices b.mag{color:var(--mag)} .pulse-prices b.g{color:var(--grn)} .pulse-prices b.r{color:var(--red)}
+  .pulse-prices>.pulse-odds{margin-left:auto;display:flex;flex-direction:row;gap:6px;flex:0 0 auto}
+  .od{font-size:9px;padding:5px 9px;border-radius:3px;letter-spacing:.06em;flex:0 0 auto;white-space:nowrap}
+  .od b{font-size:13px;display:block;text-align:center;margin-top:1px}
+  .od.up{background:rgba(70,227,170,.14);color:var(--grn)}
+  .od.dn{background:rgba(255,124,158,.14);color:var(--red)}
+  .pulse-chart{flex:1;min-height:0;position:relative}
+  .pulse-str{display:flex;align-items:center;gap:8px;font-size:9px;color:var(--dim);letter-spacing:.1em}
+  .pulse-str .bar{flex:1;height:5px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden}
+  .pulse-str .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--magd),var(--mag));border-radius:3px;transition:width .5s}
+  .pulse-str b{color:var(--mag)}
+  .lvb{font-size:8px;background:rgba(70,227,170,.18);color:var(--grn);padding:1px 5px;border-radius:2px;font-style:normal;margin-left:6px;letter-spacing:.1em}
+
   table.tbl{width:100%;border-collapse:collapse;font-size:10.5px}
   table.tbl th{text-align:left;color:var(--dim);font-weight:500;padding:3px 5px;border-bottom:1px solid var(--line);font-size:8.5px;letter-spacing:.1em;text-transform:uppercase}
   table.tbl td{padding:3px 5px;border-bottom:1px dashed rgba(255,255,255,.05)}
@@ -191,6 +210,9 @@
   .fg-tab.active{color:var(--mag);border-color:var(--mag);background:linear-gradient(180deg,rgba(255,45,155,.12),transparent)}
   @media (max-width:1024px), (pointer:coarse){
     .fg-tabbar{display:grid}
+    .fg-top{flex-wrap:nowrap;overflow-x:auto;gap:10px;padding:5px 11px 5px 50px;scrollbar-width:none}
+    .fg-top::-webkit-scrollbar{display:none}
+    .fg-top>*{flex-shrink:0;white-space:nowrap}
     .h-force{height:62vh}
     .h-candle{height:auto}
     .charts{flex-direction:column}
@@ -329,11 +351,19 @@
       </div>
     </div>
 
-    <div class="pnl h-pnl" data-group="summary">
-      <div class="ph"><span>P&amp;L TOTAL</span><span class="r g" id="fgRoi">+0%</span></div>
-      <div class="pc">
-        <div class="pnl-top"><span>SESSION CURVE</span><span class="v" id="fgPnlNow">+$0</span></div>
-        <canvas class="eq-c" id="fgEq"></canvas>
+    <div class="pnl glow h-pnl" data-group="summary">
+      <div class="ph"><span>5-MIN PULSE <i class="lvb">LIVE</i></span><span class="r g" id="fgRoi">+0%</span></div>
+      <div class="pc pulse">
+        <div class="pulse-prices">
+          <div><span>TARGET</span><b id="fgBeat">0.00%</b></div>
+          <div><span>CURRENT</span><b id="fgCur" class="g">+0.00%</b></div>
+          <div class="pulse-odds">
+            <span class="od up">UP<b id="fgUp">50%</b></span>
+            <span class="od dn">DOWN<b id="fgDn">50%</b></span>
+          </div>
+        </div>
+        <div class="pulse-chart"><canvas id="fgPulse"></canvas></div>
+        <div class="pulse-str"><span>PULSE STRENGTH</span><div class="bar"><i id="fgStrBar" style="width:0%"></i></div><b id="fgStr">0%</b></div>
       </div>
     </div>
 
@@ -387,7 +417,7 @@ const cv={};
 function sz(id){const c=$(id);if(!c)return;const dpr=Math.min(window.devicePixelRatio||1,2);
   const r=c.getBoundingClientRect();c.width=Math.max(1,r.width*dpr);c.height=Math.max(1,r.height*dpr);
   const x=c.getContext("2d");x.setTransform(dpr,0,0,dpr,0,0);cv[id]={w:r.width,h:r.height,ctx:x};}
-function sizeAll(){["fgCh0","fgCh1","fgCh2","fgStkSpark","fgForce","fgEq","fgAc1","fgAc2","fgAc3","fgAc4"].forEach(sz);buildForce();}
+function sizeAll(){["fgCh0","fgCh1","fgCh2","fgStkSpark","fgForce","fgPulse","fgAc1","fgAc2","fgAc3","fgAc4"].forEach(sz);buildForce();}
 
 function tickClock(){$("fgClock").textContent=new Date().toLocaleTimeString("en-GB",{hour12:false,timeZone:"Asia/Tokyo"});}
 setInterval(tickClock,1000);tickClock();
@@ -406,7 +436,6 @@ function tickWallet(){
   $("fgAcc").textContent=(roi>=0?"+":"")+roi.toFixed(1)+"%";
   $("fgWin").textContent=win!=null?win+"%":"—";
   $("fgRoi").textContent=(roi>=0?"+":"")+roi.toFixed(1)+"%";
-  $("fgPnlNow").textContent=(sess>=0?"+":"")+f$(sess);
   $("fgSeq").textContent=seq+" / "+rndi(250,290);
 }
 
@@ -551,13 +580,46 @@ const NOISE=[
 ];
 function noiseTick(){const[a,b]=pick(NOISE)();log(a,b);setTimeout(noiseTick,rnd(550,1300));}
 
+/* ---- 5-MIN PULSE (binary-style chart, ported from Theme C) ---- */
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+const pct=v=>{if(!isFinite(v)||Math.abs(v)<0.005)v=0;return (v>=0?"+":"")+v.toFixed(2)+"%";};
+let pBeat=Math.round(rnd(7.2e6,7.8e6)),pCur=pBeat+rnd(-3000,3000),pCd=300;
+const PXP=[];for(let i=0;i<120;i++)PXP.push(pCur+rnd(-4000,4000));
+function tickPulseCd(){pCd--;if(pCd<0){pCd=300;pBeat=Math.round(pCur);}}
+function tickPulse(){
+  pCur+=rnd(-2700,2800);PXP.push(pCur);if(PXP.length>120)PXP.shift();
+  const diff=pCur-pBeat;
+  const ce=$("fgCur");if(ce){ce.textContent=pct(pBeat?diff/pBeat*100:0);ce.className=diff>=0?"g":"r";}
+  const up=clamp(Math.round(50+diff/9000*22+rnd(-3,3)),8,92);
+  $("fgUp").textContent=up+"%";$("fgDn").textContent=(100-up)+"%";
+  const str=clamp(Math.round(Math.abs(diff)/9000*100+rnd(-6,6)),3,99);
+  $("fgStr").textContent=str+"%";$("fgStrBar").style.width=str+"%";
+}
+function drawPulse(){const o=cv["fgPulse"];if(!o||o.w===0)return;const{ctx,w:W,h:H}=o;ctx.clearRect(0,0,W,H);
+  if(PXP.length<2)return;
+  let lo=Math.min(...PXP,pBeat),hi=Math.max(...PXP,pBeat);const pad=(hi-lo)*0.14||1;lo-=pad;hi+=pad;const r=hi-lo;
+  const AW=W-46,X=i=>i/(PXP.length-1)*AW,Y=v=>H-((v-lo)/r)*(H-16)-8;
+  ctx.font="9px monospace";ctx.textAlign="left";
+  ctx.strokeStyle="rgba(255,255,255,.04)";ctx.fillStyle="rgba(220,215,235,.32)";
+  for(let i=0;i<=3;i++){const v=lo+r*(i/3),y=Y(v);ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(AW,y);ctx.stroke();ctx.fillText(pct(pBeat?(v-pBeat)/pBeat*100:0),AW+4,y+3);}
+  const by=Y(pBeat);ctx.setLineDash([5,4]);ctx.strokeStyle="rgba(180,145,255,.6)";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(0,by);ctx.lineTo(AW,by);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle="rgba(180,145,255,.9)";ctx.fillText("TARGET",2,by-4);
+  const last2=PXP[PXP.length-1],upx=last2>=pBeat;
+  ctx.beginPath();PXP.forEach((v,i)=>{const x=X(i),y=Y(v);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});
+  ctx.shadowColor=upx?"rgba(70,227,170,.6)":"rgba(255,124,158,.55)";ctx.shadowBlur=8;
+  ctx.strokeStyle=upx?"#46e3aa":"#ff7c9e";ctx.lineWidth=1.8;ctx.stroke();ctx.shadowBlur=0;
+  ctx.lineTo(X(PXP.length-1),H);ctx.lineTo(0,H);ctx.closePath();
+  ctx.fillStyle=upx?"rgba(70,227,170,.10)":"rgba(255,124,158,.08)";ctx.fill();
+  const hX=X(PXP.length-1),hY=Y(last2);ctx.fillStyle=upx?"#7af0ab":"#ff9db4";ctx.beginPath();ctx.arc(hX,hY,2.6,0,7);ctx.fill();
+}
+
 let last=0;
-function frame(t){drawCharts();drawStkSpark();drawForce(t);drawEq();
+function frame(t){drawCharts();drawStkSpark();drawForce(t);drawPulse();
   drawBars("fgAc1",AN.a1,"rgba(168,119,255,ALPHA)");drawBars("fgAc2",AN.a2,"rgba(201,166,255,ALPHA)");
   drawBars("fgAc3",AN.a3,"rgba(63,224,166,ALPHA)");drawBars("fgAc4",AN.a4,"rgba(122,166,255,ALPHA)");
   requestAnimationFrame(frame);}
 
-const BASE_IV={price:150,wallet:1400,streak:2600,trade:1300,an:1100,fp:95};
+const BASE_IV={price:150,wallet:1400,streak:2600,trade:1300,an:1100,fp:95,pulse:700};
 const IVs={};
 function applySpeed(){const s=Math.max(0.3,Math.min(3,CFG.speed||1));
   for(const k in IVs)clearInterval(IVs[k]);
@@ -567,12 +629,14 @@ function applySpeed(){const s=Math.max(0.3,Math.min(3,CFG.speed||1));
   IVs.trade=setInterval(tradeTick,Math.round(BASE_IV.trade/s));
   IVs.an=setInterval(tickAn,Math.round(BASE_IV.an/s));
   IVs.fp=setInterval(spawnFP,Math.round(BASE_IV.fp/s));
+  IVs.pulse=setInterval(tickPulse,Math.round(BASE_IV.pulse/s));
 }
 function kickoff(){
-  CH.forEach(reinit);setChN(2);tuneApplyManualBal();tickWallet();tickStreak();tickAn();renderBook();
+  CH.forEach(reinit);setChN(2);tuneApplyManualBal();tickWallet();tickStreak();tickAn();renderBook();tickPulse();
   for(let i=0;i<8;i++){const[a,b]=pick(NOISE)();log(a,b);}
   for(let i=0;i<5;i++)tradeTick();
   applySpeed();
+  setInterval(tickPulseCd,1000);
   setTimeout(rotateCharts,rnd(5000,15000));
   setTimeout(noiseTick,400);
   requestAnimationFrame(frame);
