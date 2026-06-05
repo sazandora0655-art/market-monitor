@@ -120,6 +120,7 @@
     font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--txt)}
   .pnl .ph .r{color:var(--mag);font-weight:700}
   .pnl .ph .r.g{color:var(--grn)}
+  .pnl .ph .r.dn{color:var(--red)}
   .pnl .pc{flex:1;min-height:0;padding:9px 11px;position:relative}
   canvas{display:block;width:100%;height:100%}
 
@@ -418,7 +419,6 @@ function tickWallet(){
   $("fgTr").textContent=trades;
   $("fgAcc").textContent=(roi>=0?"+":"")+roi.toFixed(1)+"%";
   $("fgWin").textContent=win!=null?win+"%":"—";
-  $("fgRoi").textContent=(roi>=0?"+":"")+roi.toFixed(1)+"%";
   $("fgSeq").textContent=seq+" / "+rndi(250,290);
 }
 
@@ -566,7 +566,7 @@ function noiseTick(){const[a,b]=pick(NOISE)();log(a,b);setTimeout(noiseTick,rnd(
 /* ---- 5-MIN PULSE (binary-style chart, ported from Theme C) ---- */
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
 const pct=v=>{if(!isFinite(v)||Math.abs(v)<0.005)v=0;return (v>=0?"+":"")+v.toFixed(2)+"%";};
-let pBeat=Math.round(rnd(7.2e6,7.8e6)),pCur=pBeat+rnd(-3000,3000),pCd=300;
+let pBeat=Math.round(rnd(7.2e6,7.8e6)),pCur=pBeat+rnd(-3000,3000),pCd=300,pPct=rnd(-0.2,0.6);
 const PXP=[];(function(){let p=pBeat+rnd(-2500,2500);for(let i=0;i<120;i++){p+=rnd(-1500,1560);PXP.push(p);}pCur=Math.round(p);})();
 function tickPulseCd(){pCd--;if(pCd<0){pCd=300;pBeat=Math.round(pCur);}}
 function tickPulse(){
@@ -577,6 +577,8 @@ function tickPulse(){
   const ee=$("fgEdge");if(ee)ee.textContent=edge+"%";
   const flow=(up?1:-1)*rnd(0.3,3.4);
   const fe=$("fgFlow");if(fe)fe.textContent=(flow>=0?"+":"")+flow.toFixed(1)+"k";
+  pPct=clamp(pPct+rnd(-0.16,0.16)+(0.12-pPct)*0.05,-1.4,2.2);
+  const re=$("fgRoi");if(re){re.textContent=(pPct>=0?"+":"")+pPct.toFixed(2)+"%";re.className=pPct>=0?"r g":"r dn";}
 }
 function drawPulse(){const o=cv["fgPulse"];if(!o||o.w===0)return;const{ctx,w:W,h:H}=o;ctx.clearRect(0,0,W,H);
   if(PXP.length<2)return;
