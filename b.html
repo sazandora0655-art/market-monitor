@@ -161,23 +161,14 @@
   .pnl-top .v{font-weight:700;color:var(--grn)}
   .eq-c{position:absolute;left:10px;right:10px;bottom:8px;top:40px}
 
-  /* 5-MIN PULSE (Theme C port, violet) */
-  .pulse{display:flex;flex-direction:column;gap:7px;height:100%}
-  .pulse-prices{display:flex;gap:12px;align-items:center;flex-wrap:nowrap}
-  .pulse-prices>div{display:flex;flex-direction:column}
-  .pulse-prices span{font-size:8px;color:var(--dim);letter-spacing:.12em}
-  .pulse-prices b{font-size:15px;color:var(--txt)}
-  .pulse-prices b.mag{color:var(--mag)} .pulse-prices b.g{color:var(--grn)} .pulse-prices b.r{color:var(--red)}
-  .pulse-prices>.pulse-odds{margin-left:auto;display:flex;flex-direction:row;gap:6px;flex:0 0 auto}
-  .od{font-size:9px;padding:5px 9px;border-radius:3px;letter-spacing:.06em;flex:0 0 auto;white-space:nowrap}
-  .od b{font-size:13px;display:block;text-align:center;margin-top:1px}
-  .od.up{background:rgba(70,227,170,.14);color:var(--grn)}
-  .od.dn{background:rgba(255,124,158,.14);color:var(--red)}
+  /* 5-MIN PULSE (minimal, chart-led) */
+  .pulse{display:flex;flex-direction:column;gap:6px;height:100%}
   .pulse-chart{flex:1;min-height:0;position:relative}
-  .pulse-str{display:flex;align-items:center;gap:8px;font-size:9px;color:var(--dim);letter-spacing:.1em}
-  .pulse-str .bar{flex:1;height:5px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden}
-  .pulse-str .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--magd),var(--mag));border-radius:3px;transition:width .5s}
-  .pulse-str b{color:var(--mag)}
+  .pulse-stat{display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;
+    letter-spacing:.04em;color:var(--dim);white-space:nowrap;padding-bottom:1px}
+  .pulse-stat b{font-weight:700}
+  .pulse-stat b.g{color:var(--grn)} .pulse-stat b.r{color:var(--red)} .pulse-stat b.e{color:var(--mag)}
+  .pulse-stat .cd{color:var(--txt)}
   .lvb{font-size:8px;background:rgba(70,227,170,.18);color:var(--grn);padding:1px 5px;border-radius:2px;font-style:normal;margin-left:6px;letter-spacing:.1em}
 
   table.tbl{width:100%;border-collapse:collapse;font-size:10.5px}
@@ -354,16 +345,8 @@
     <div class="pnl glow h-pnl" data-group="summary">
       <div class="ph"><span>5-MIN PULSE <i class="lvb">LIVE</i></span><span class="r g" id="fgRoi">+0%</span></div>
       <div class="pc pulse">
-        <div class="pulse-prices">
-          <div><span>TARGET</span><b id="fgBeat">0.00%</b></div>
-          <div><span>CURRENT</span><b id="fgCur" class="g">+0.00%</b></div>
-          <div class="pulse-odds">
-            <span class="od up">UP<b id="fgUp">50%</b></span>
-            <span class="od dn">DOWN<b id="fgDn">50%</b></span>
-          </div>
-        </div>
         <div class="pulse-chart"><canvas id="fgPulse"></canvas></div>
-        <div class="pulse-str"><span>PULSE STRENGTH</span><div class="bar"><i id="fgStrBar" style="width:0%"></i></div><b id="fgStr">0%</b></div>
+        <div class="pulse-stat"><b id="fgDir" class="g">NEXT ▲ LONG</b> · <span id="fgCd" class="cd">5:00</span> · EDGE <b id="fgEdge" class="e">64%</b></div>
       </div>
     </div>
 
@@ -584,34 +567,30 @@ function noiseTick(){const[a,b]=pick(NOISE)();log(a,b);setTimeout(noiseTick,rnd(
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
 const pct=v=>{if(!isFinite(v)||Math.abs(v)<0.005)v=0;return (v>=0?"+":"")+v.toFixed(2)+"%";};
 let pBeat=Math.round(rnd(7.2e6,7.8e6)),pCur=pBeat+rnd(-3000,3000),pCd=300;
-const PXP=[];for(let i=0;i<120;i++)PXP.push(pCur+rnd(-4000,4000));
-function tickPulseCd(){pCd--;if(pCd<0){pCd=300;pBeat=Math.round(pCur);}}
+const PXP=[];(function(){let p=pBeat+rnd(-2500,2500);for(let i=0;i<120;i++){p+=rnd(-1500,1560);PXP.push(p);}pCur=Math.round(p);})();
+function fmtCd(s){const m=Math.floor(s/60),ss=s%60;return m+":"+(ss<10?"0":"")+ss;}
+function tickPulseCd(){pCd--;if(pCd<0){pCd=300;pBeat=Math.round(pCur);}const e=$("fgCd");if(e)e.textContent=fmtCd(pCd);}
 function tickPulse(){
   pCur+=rnd(-2700,2800);PXP.push(pCur);if(PXP.length>120)PXP.shift();
-  const diff=pCur-pBeat;
-  const ce=$("fgCur");if(ce){ce.textContent=pct(pBeat?diff/pBeat*100:0);ce.className=diff>=0?"g":"r";}
-  const up=clamp(Math.round(50+diff/9000*22+rnd(-3,3)),8,92);
-  $("fgUp").textContent=up+"%";$("fgDn").textContent=(100-up)+"%";
-  const str=clamp(Math.round(Math.abs(diff)/9000*100+rnd(-6,6)),3,99);
-  $("fgStr").textContent=str+"%";$("fgStrBar").style.width=str+"%";
+  const diff=pCur-pBeat,up=diff>=0;
+  const de=$("fgDir");if(de){de.textContent=up?"NEXT ▲ LONG":"NEXT ▼ SHORT";de.className=up?"g":"r";}
+  const edge=clamp(Math.round(50+Math.abs(diff)/9000*42+rnd(-4,4)),50,97);
+  const ee=$("fgEdge");if(ee)ee.textContent=edge+"%";
 }
 function drawPulse(){const o=cv["fgPulse"];if(!o||o.w===0)return;const{ctx,w:W,h:H}=o;ctx.clearRect(0,0,W,H);
   if(PXP.length<2)return;
   let lo=Math.min(...PXP,pBeat),hi=Math.max(...PXP,pBeat);const pad=(hi-lo)*0.14||1;lo-=pad;hi+=pad;const r=hi-lo;
-  const AW=W-46,X=i=>i/(PXP.length-1)*AW,Y=v=>H-((v-lo)/r)*(H-16)-8;
-  ctx.font="9px monospace";ctx.textAlign="left";
-  ctx.strokeStyle="rgba(255,255,255,.04)";ctx.fillStyle="rgba(220,215,235,.32)";
-  for(let i=0;i<=3;i++){const v=lo+r*(i/3),y=Y(v);ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(AW,y);ctx.stroke();ctx.fillText(pct(pBeat?(v-pBeat)/pBeat*100:0),AW+4,y+3);}
-  const by=Y(pBeat);ctx.setLineDash([5,4]);ctx.strokeStyle="rgba(180,145,255,.6)";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(0,by);ctx.lineTo(AW,by);ctx.stroke();ctx.setLineDash([]);
-  ctx.fillStyle="rgba(180,145,255,.9)";ctx.fillText("TARGET",2,by-4);
+  const X=i=>i/(PXP.length-1)*W,Y=v=>H-((v-lo)/r)*(H-14)-7;
+  ctx.strokeStyle="rgba(255,255,255,.04)";ctx.lineWidth=1;
+  for(let i=1;i<3;i++){const y=H/3*i;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+  const by=Y(pBeat);ctx.setLineDash([5,4]);ctx.strokeStyle="rgba(180,145,255,.5)";ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(0,by);ctx.lineTo(W,by);ctx.stroke();ctx.setLineDash([]);
   const last2=PXP[PXP.length-1],upx=last2>=pBeat;
   ctx.beginPath();PXP.forEach((v,i)=>{const x=X(i),y=Y(v);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});
   ctx.shadowColor=upx?"rgba(70,227,170,.6)":"rgba(255,124,158,.55)";ctx.shadowBlur=8;
-  ctx.strokeStyle=upx?"#46e3aa":"#ff7c9e";ctx.lineWidth=1.8;ctx.stroke();ctx.shadowBlur=0;
+  ctx.strokeStyle=upx?"#46e3aa":"#ff7c9e";ctx.lineWidth=1.9;ctx.stroke();ctx.shadowBlur=0;
   ctx.lineTo(X(PXP.length-1),H);ctx.lineTo(0,H);ctx.closePath();
   ctx.fillStyle=upx?"rgba(70,227,170,.10)":"rgba(255,124,158,.08)";ctx.fill();
-  const hX=X(PXP.length-1),hY=Y(last2);ctx.fillStyle=upx?"#7af0ab":"#ff9db4";ctx.beginPath();ctx.arc(hX,hY,2.6,0,7);ctx.fill();
-}
+  const hX=X(PXP.length-1),hY=Y(last2);ctx.shadowColor=upx?"rgba(70,227,170,.9)":"rgba(255,124,158,.9)";ctx.shadowBlur=9;ctx.fillStyle=upx?"#7af0ab":"#ff9db4";ctx.beginPath();ctx.arc(hX,hY,3,0,7);ctx.fill();ctx.shadowBlur=0;}
 
 let last=0;
 function frame(t){drawCharts();drawStkSpark();drawForce(t);drawPulse();
