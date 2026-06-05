@@ -61,6 +61,40 @@
   .gmenu .gm-i.active{color:var(--mag);font-weight:700}
   .gmenu .gm-i .dot{width:7px;height:7px;border-radius:50%;background:var(--line)}
   .gmenu .gm-i.active .dot{background:var(--mag);box-shadow:0 0 6px var(--mag)}
+  .gmenu .gm-tune{border-top:1px solid var(--line);color:var(--mag)}
+  .gmenu .gm-tune .dot{background:var(--mag);box-shadow:0 0 6px var(--mag)}
+
+  /* カスタム設定パネル（TUNE） */
+  .tune-ov{position:fixed;inset:0;z-index:95000;background:rgba(8,6,14,.76);backdrop-filter:blur(2px);
+    display:none;align-items:center;justify-content:center;padding:18px;-webkit-tap-highlight-color:transparent}
+  .tune-ov.open{display:flex}
+  .tune-box{width:100%;max-width:344px;background:var(--panel2);border:1px solid var(--mag);border-radius:8px;
+    box-shadow:0 20px 60px rgba(0,0,0,.7);padding:16px 16px 14px;max-height:88vh;overflow:auto}
+  .tune-h{display:flex;align-items:center;font-weight:700;letter-spacing:.1em;color:var(--mag);font-size:13px;margin-bottom:15px}
+  .tune-h span{color:var(--dim);font-weight:400;font-size:10px;margin-left:6px;letter-spacing:.14em}
+  .tune-x{margin-left:auto;background:none;border:none;color:var(--dim);font-size:23px;line-height:1;cursor:pointer;padding:0 2px}
+  .tune-x:hover{color:var(--mag)}
+  .tune-row{margin-bottom:15px}
+  .tune-row > label{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--txt);
+    letter-spacing:.06em;margin-bottom:8px;gap:8px}
+  .tune-row > label b{color:var(--mag);font-size:13px;white-space:nowrap}
+  .tune-sec{font-size:9px;letter-spacing:.16em;color:var(--dim);text-transform:uppercase;border-top:1px solid var(--line);
+    padding-top:13px;margin-bottom:11px}
+  .tune-box input[type=range]{width:100%;accent-color:var(--mag);height:24px;cursor:pointer}
+  .tune-mode{display:flex;gap:18px}
+  .tune-mode label{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--txt);cursor:pointer}
+  .tune-mode input{accent-color:var(--mag);cursor:pointer}
+  .tune-grid{display:grid;gap:9px;transition:opacity .2s}
+  .tune-grid.dis{opacity:.4;pointer-events:none}
+  .tune-grid label{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--dim);gap:10px}
+  .tune-grid input{flex:0 0 138px;background:var(--bg);border:1px solid var(--line);border-radius:4px;color:var(--txt);
+    font-family:inherit;font-size:12px;padding:7px 9px;outline:none;text-align:right}
+  .tune-grid input:focus{border-color:var(--mag)}
+  .tune-foot{display:flex;align-items:center;gap:12px;margin-top:16px;border-top:1px solid var(--line);padding-top:13px}
+  .tune-foot button{background:var(--panel);border:1px solid var(--line);color:var(--txt);border-radius:4px;
+    padding:8px 13px;font-family:inherit;font-size:11px;cursor:pointer;letter-spacing:.06em}
+  .tune-foot button:hover{border-color:var(--mag);color:var(--mag)}
+  .tune-note{font-size:9px;color:var(--dim);letter-spacing:.03em;line-height:1.4}
 
   .fg-app{display:flex;flex-direction:column;gap:7px;
     padding:calc(7px + env(safe-area-inset-top,0px)) 7px calc(7px + env(safe-area-inset-bottom,0px));height:100vh;height:100dvh}
@@ -202,6 +236,33 @@
   <div class="gm-i" data-theme="a" data-href="index.html"><span class="dot"></span>A · NEON CYBER <span class="tag">dark</span></div>
   <div class="gm-i active" data-theme="b" data-href="b.html"><span class="dot"></span>B · FORCE GRAPH <span class="tag">violet</span></div>
   <div class="gm-i" data-theme="c" data-href="c.html"><span class="dot"></span>C · PULSE ENGINE <span class="tag">amber</span></div>
+  <div class="gm-i gm-tune" id="bgTuneOpen"><span class="dot"></span>カスタム設定 <span class="tag">TUNE</span></div>
+</div>
+
+<div class="tune-ov" id="bgTune">
+  <div class="tune-box">
+    <div class="tune-h">カスタム設定 <span>· LIVE TUNE</span><button class="tune-x" id="bgTuneX" title="閉じる" type="button">&times;</button></div>
+    <div class="tune-row">
+      <label>更新速度（動く速さ）<b id="bgSpeedV">1.0×</b></label>
+      <input type="range" id="bgSpeed" min="0.3" max="3" step="0.1" value="1">
+    </div>
+    <div class="tune-sec">表示数値</div>
+    <div class="tune-row tune-mode">
+      <label><input type="radio" name="bgNumMode" value="auto" checked> 自動</label>
+      <label><input type="radio" name="bgNumMode" value="manual"> 手動で固定</label>
+    </div>
+    <div class="tune-grid dis" id="bgNumGrid">
+      <label>BALANCE ¥<input type="number" id="bgN_bal" inputmode="numeric"></label>
+      <label>SESSION P&amp;L ¥<input type="number" id="bgN_sess" inputmode="numeric"></label>
+      <label>WIN RATE %<input type="number" id="bgN_win" min="0" max="100"></label>
+      <label>ROI %<input type="number" id="bgN_roi" step="0.1"></label>
+      <label>WIN STREAK<input type="number" id="bgN_streak" min="0"></label>
+    </div>
+    <div class="tune-foot">
+      <button id="bgTuneReset" type="button">リセット</button>
+      <span class="tune-note">設定はこのブラウザに保存されます</span>
+    </div>
+  </div>
 </div>
 
 <div class="fg-app">
@@ -317,6 +378,11 @@ const rndi=(a,b)=>Math.floor(rnd(a,b+1));
 const pick=a=>a[Math.floor(Math.random()*a.length)];
 const f$=v=>(v<0?"-¥":"¥")+Math.abs(Math.round(v)).toLocaleString();
 
+let CFG;
+try{CFG=Object.assign({speed:1,numMode:"auto",nums:{}},JSON.parse(localStorage.getItem("aee_b_cfg")||"{}"));}
+catch(e){CFG={speed:1,numMode:"auto",nums:{}};}
+function saveCfg(){try{localStorage.setItem("aee_b_cfg",JSON.stringify(CFG));}catch(e){}}
+
 const cv={};
 function sz(id){const c=$(id);if(!c)return;const dpr=Math.min(window.devicePixelRatio||1,2);
   const r=c.getBoundingClientRect();c.width=Math.max(1,r.width*dpr);c.height=Math.max(1,r.height*dpr);
@@ -328,13 +394,18 @@ setInterval(tickClock,1000);tickClock();
 
 let bal=rnd(120000,260000),start=bal,sess=0,trades=0,wins=0,seq=rndi(4,9);
 function tickWallet(){
-  const d=rnd(-200,310);bal+=d;sess+=d;
+  const man=CFG.numMode==="manual",n=CFG.nums||{};
+  const d=rnd(-200,310);
+  if(man&&n.bal!=null)bal=n.bal; else bal+=d;
+  if(man&&n.sess!=null)sess=n.sess; else sess+=d;
+  const roi=(man&&n.roi!=null)?n.roi:((bal-start)/start*100);
+  const win=(man&&n.win!=null)?Math.round(n.win):(trades?Math.round(wins/trades*100):null);
   $("fgBal").textContent=f$(bal);
   $("fgSess").textContent=(sess>=0?"+":"")+f$(sess);
   $("fgTr").textContent=trades;
-  $("fgAcc").textContent=(sess>=0?"+":"")+((bal-start)/start*100).toFixed(1)+"%";
-  $("fgWin").textContent=trades?Math.round(wins/trades*100)+"%":"—";
-  $("fgRoi").textContent=(sess>=0?"+":"")+((bal-start)/start*100).toFixed(1)+"%";
+  $("fgAcc").textContent=(roi>=0?"+":"")+roi.toFixed(1)+"%";
+  $("fgWin").textContent=win!=null?win+"%":"—";
+  $("fgRoi").textContent=(roi>=0?"+":"")+roi.toFixed(1)+"%";
   $("fgPnlNow").textContent=(sess>=0?"+":"")+f$(sess);
   $("fgSeq").textContent=seq+" / "+rndi(250,290);
 }
@@ -392,7 +463,8 @@ function setChN(n){chN=Math.max(1,Math.min(3,n));for(let i=0;i<3;i++){const cc=$
 function rotateCharts(){let n=chN+(Math.random()<0.5?-1:1);if(n<1)n=2;if(n>3)n=2;for(let i=0;i<n;i++)reinit(CH[i]);setChN(n);setTimeout(rotateCharts,rnd(5000,15000));}
 
 const stk={n:rndi(3,9),hist:[]};
-function tickStreak(){stk.n=Math.max(0,stk.n+(Math.random()<0.7?1:-rndi(1,3)));
+function tickStreak(){const man=CFG.numMode==="manual",n=CFG.nums||{};
+  if(man&&n.streak!=null)stk.n=Math.round(n.streak); else stk.n=Math.max(0,stk.n+(Math.random()<0.7?1:-rndi(1,3)));
   $("fgStk").textContent=stk.n;$("fgStkP").textContent="+"+rndi(8,22);
   $("fgStreakR").textContent="x"+stk.n;$("fgStreak").textContent="STREAK "+stk.n;
   stk.hist.push(stk.n+rnd(0,3));if(stk.hist.length>40)stk.hist.shift();
@@ -485,16 +557,22 @@ function frame(t){drawCharts();drawStkSpark();drawForce(t);drawEq();
   drawBars("fgAc3",AN.a3,"rgba(63,224,166,ALPHA)");drawBars("fgAc4",AN.a4,"rgba(122,166,255,ALPHA)");
   requestAnimationFrame(frame);}
 
+const BASE_IV={price:150,wallet:1400,streak:2600,trade:1300,an:1100,fp:95};
+const IVs={};
+function applySpeed(){const s=Math.max(0.3,Math.min(3,CFG.speed||1));
+  for(const k in IVs)clearInterval(IVs[k]);
+  IVs.price=setInterval(priceTick,Math.round(BASE_IV.price/s));
+  IVs.wallet=setInterval(tickWallet,Math.round(BASE_IV.wallet/s));
+  IVs.streak=setInterval(tickStreak,Math.round(BASE_IV.streak/s));
+  IVs.trade=setInterval(tradeTick,Math.round(BASE_IV.trade/s));
+  IVs.an=setInterval(tickAn,Math.round(BASE_IV.an/s));
+  IVs.fp=setInterval(spawnFP,Math.round(BASE_IV.fp/s));
+}
 function kickoff(){
-  CH.forEach(reinit);setChN(2);tickWallet();tickStreak();tickAn();renderBook();
+  CH.forEach(reinit);setChN(2);tuneApplyManualBal();tickWallet();tickStreak();tickAn();renderBook();
   for(let i=0;i<8;i++){const[a,b]=pick(NOISE)();log(a,b);}
   for(let i=0;i<5;i++)tradeTick();
-  setInterval(priceTick,150);
-  setInterval(tickWallet,1400);
-  setInterval(tickStreak,2600);
-  setInterval(tradeTick,1300);
-  setInterval(tickAn,1100);
-  setInterval(spawnFP,95);
+  applySpeed();
   setTimeout(rotateCharts,rnd(5000,15000));
   setTimeout(noiseTick,400);
   requestAnimationFrame(frame);
@@ -514,8 +592,36 @@ requestAnimationFrame(kickoff);
 (function(){const btn=$("gearBtn"),menu=$("gearMenu");
   btn.addEventListener("click",e=>{e.stopPropagation();menu.classList.toggle("open");btn.classList.toggle("on",menu.classList.contains("open"));});
   document.addEventListener("click",()=>{menu.classList.remove("open");btn.classList.remove("on");});
-  menu.addEventListener("click",e=>{const it=e.target.closest(".gm-i");if(!it)return;const th=it.dataset.theme;
+  menu.addEventListener("click",e=>{const it=e.target.closest(".gm-i");if(!it)return;
+    if(it.id==="bgTuneOpen"){tuneOpen();menu.classList.remove("open");btn.classList.remove("on");return;}
+    const th=it.dataset.theme;if(!th)return;
     try{localStorage.setItem("aee_theme",th);}catch(x){}if(th!=="b")location.href=it.dataset.href+"?cb="+Date.now();menu.classList.remove("open");btn.classList.remove("on");});})();
+
+/* カスタム設定（TUNE） */
+const numOr=v=>{v=parseFloat(v);return isFinite(v)?v:null;};
+function tuneCommitNums(){CFG.nums={bal:numOr($("bgN_bal").value),sess:numOr($("bgN_sess").value),
+  win:numOr($("bgN_win").value),roi:numOr($("bgN_roi").value),streak:numOr($("bgN_streak").value)};}
+function tuneApplyManualBal(){if(CFG.numMode==="manual"&&CFG.nums){if(CFG.nums.bal!=null){bal=CFG.nums.bal;start=bal;}if(CFG.nums.sess!=null)sess=CFG.nums.sess;}}
+function tuneInitInputs(){const n=CFG.nums||{};
+  $("bgN_bal").value=n.bal!=null?n.bal:Math.round(bal);
+  $("bgN_sess").value=n.sess!=null?n.sess:Math.round(sess);
+  $("bgN_win").value=n.win!=null?n.win:(trades?Math.round(wins/trades*100):72);
+  $("bgN_roi").value=n.roi!=null?n.roi:((bal-start)/start*100).toFixed(1);
+  $("bgN_streak").value=n.streak!=null?n.streak:stk.n;
+  const r=document.querySelector('input[name=bgNumMode][value="'+(CFG.numMode||"auto")+'"]');if(r)r.checked=true;
+  $("bgNumGrid").classList.toggle("dis",CFG.numMode!=="manual");
+  $("bgSpeed").value=CFG.speed||1;$("bgSpeedV").textContent=(CFG.speed||1).toFixed(1)+"×";}
+function tuneOpen(){tuneInitInputs();$("bgTune").classList.add("open");}
+function tuneClose(){$("bgTune").classList.remove("open");}
+$("bgTuneX").addEventListener("click",tuneClose);
+$("bgTune").addEventListener("click",e=>{if(e.target===$("bgTune"))tuneClose();});
+$("bgSpeed").addEventListener("input",e=>{CFG.speed=parseFloat(e.target.value);$("bgSpeedV").textContent=CFG.speed.toFixed(1)+"×";saveCfg();applySpeed();});
+document.querySelectorAll('input[name=bgNumMode]').forEach(r=>r.addEventListener("change",e=>{
+  CFG.numMode=e.target.value;$("bgNumGrid").classList.toggle("dis",CFG.numMode!=="manual");
+  if(CFG.numMode==="manual"){tuneCommitNums();tuneApplyManualBal();}saveCfg();tickWallet();tickStreak();}));
+["bgN_bal","bgN_sess","bgN_win","bgN_roi","bgN_streak"].forEach(id=>$(id).addEventListener("input",()=>{
+  tuneCommitNums();tuneApplyManualBal();saveCfg();if(CFG.numMode==="manual"){tickWallet();tickStreak();}}));
+$("bgTuneReset").addEventListener("click",()=>{CFG={speed:1,numMode:"auto",nums:{}};saveCfg();applySpeed();tuneInitInputs();tickWallet();tickStreak();});
 
 (function(){const EXPECTED="610a56280323723390c0aab513bfb3b030ed43539311425af77c87fd08e76740",KEY="aee_gate_ok";
   function sha256(ascii){function rr(v,a){return (v>>>a)|(v<<(32-a));}var mp=Math.pow,maxWord=mp(2,32),res="",words=[],i,j;var bitLen=ascii.length*8;
