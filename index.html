@@ -212,6 +212,31 @@
   .gmenu .gm-i.active .dot{background:var(--accent);box-shadow:0 0 6px var(--accent)}
   .m-top{padding-right:48px}
 
+  /* ===== カスタム設定パネル（TUNE） ===== */
+  .gmenu .gm-tune{border-top:1px solid var(--line);color:var(--accent)}
+  .gmenu .gm-tune .dot{background:var(--accent);box-shadow:0 0 6px var(--accent)}
+  .tune-ov{position:fixed;inset:0;z-index:95000;background:rgba(6,7,11,.78);backdrop-filter:blur(2px);
+    display:none;align-items:center;justify-content:center;padding:18px}
+  .tune-ov.open{display:flex}
+  .tune-box{width:100%;max-width:344px;background:var(--panel2);border:1px solid var(--accent);border-radius:8px;
+    box-shadow:0 18px 50px rgba(0,0,0,.6),0 0 22px rgba(255,90,155,.18);padding:18px 18px 16px}
+  .tune-h{display:flex;align-items:center;font-weight:700;letter-spacing:.1em;color:var(--accent);font-size:13px;margin-bottom:15px}
+  .tune-h span{color:var(--dim);font-weight:400;font-size:10px;margin-left:6px;letter-spacing:.14em}
+  .tune-x{margin-left:auto;background:none;border:none;color:var(--dim);font-size:23px;line-height:1;cursor:pointer;padding:0 2px}
+  .tune-x:hover{color:var(--accent)}
+  .tune-row{margin-bottom:14px}
+  .tune-row > label{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--txt);
+    letter-spacing:.04em;margin-bottom:8px}
+  .tune-row > label b{color:var(--accent);font-size:13px;white-space:nowrap}
+  .tune-box input[type=range]{width:100%;accent-color:var(--accent);height:24px;cursor:pointer}
+  .tune-rate{font-size:11px;color:var(--gold);letter-spacing:.04em;margin-top:4px}
+  .tune-rate b{color:var(--gold)}
+  .tune-foot{display:flex;align-items:center;gap:12px;margin-top:14px;border-top:1px solid var(--line);padding-top:13px}
+  .tune-foot button{background:var(--panel);border:1px solid var(--line);color:var(--txt);border-radius:4px;
+    padding:7px 14px;font-size:11px;cursor:pointer;letter-spacing:.06em}
+  .tune-foot button:hover{border-color:var(--accent);color:var(--accent)}
+  .tune-note{font-size:9px;color:var(--dim);letter-spacing:.03em;line-height:1.4}
+
   /* ===== PC（広い画面）= 元デザイン風の多パネル一覧レイアウト ===== */
   @media (min-width: 900px){
     .m-top{padding:10px 16px}
@@ -270,6 +295,23 @@
   <div class="gm-i active" data-theme="a" data-href="index.html"><span class="dot"></span>A · NEON CYBER <span class="tag">dark</span></div>
   <div class="gm-i" data-theme="b" data-href="b.html"><span class="dot"></span>B · FORCE GRAPH <span class="tag">violet</span></div>
   <div class="gm-i" data-theme="c" data-href="c.html"><span class="dot"></span>C · PULSE ENGINE <span class="tag">amber</span></div>
+  <div class="gm-i gm-tune" id="aTuneOpen"><span class="dot"></span>カスタム設定 <span class="tag">TUNE</span></div>
+</div>
+
+<!-- カスタム設定（TUNE）パネル -->
+<div class="tune-ov" id="aTune">
+  <div class="tune-box">
+    <div class="tune-h">カスタム設定 <span>· LIVE TUNE</span><button class="tune-x" id="aTuneX" title="閉じる" type="button">&times;</button></div>
+    <div class="tune-row">
+      <label>利益ペース速度 <b id="aSpeedV">1.0×</b></label>
+      <input type="range" id="aSpeed" min="0.3" max="3" step="0.1" value="1">
+      <div class="tune-rate">現在のペース: <b id="aRateV">30分で ¥100,000</b></div>
+    </div>
+    <div class="tune-foot">
+      <button id="aTuneReset" type="button">リセット</button>
+      <span class="tune-note">累計利益の増えるペース（ベース=30分で¥100,000）。設定はこのブラウザに保存されます。</span>
+    </div>
+  </div>
 </div>
 
 <div class="m-app">
@@ -480,7 +522,37 @@ let PE = null; // alias for terminal log / candle cadence — points to slot-0 p
 
 const SYMS = ["USD/JPY","EUR/USD","GBP/JPY","AUD/USD","EUR/JPY","USD/CHF","XAU/USD","NZD/USD","GBP/USD","NZD/JPY"];
 const POS = [];
-const EQ  = { closed:0, history:[0], dayClosed:0, wins:0, trades:0, dd:0, peak:0 };
+const EQ  = { closed:0, history:[0], dayClosed:0, wins:0, trades:0, dd:0, peak:0, target:0 };
+
+/* ===== カスタム設定（TUNE）: 累計利益の増えるペース ===== */
+let CFG;
+try{ CFG = Object.assign({speed:1}, JSON.parse(localStorage.getItem("aee_a_cfg")||"{}")); }
+catch(e){ CFG = {speed:1}; }
+function saveCfg(){ try{ localStorage.setItem("aee_a_cfg", JSON.stringify(CFG)); }catch(e){} }
+
+// ベース = 30分で +¥100,000（speed=1.0 のとき）。speed で倍率。
+const PROFIT_BASE_PER_MIN = 100000 / 30;            // ¥/分
+const PROFIT_BASE_PER_MS  = PROFIT_BASE_PER_MIN / 60000;
+let _lastAcc = null;
+// 経過時間に応じて「目標累計」を進める（タブ非表示の飛びは抑える）
+function advanceProfitTarget(){
+  const now = Date.now();
+  if(_lastAcc === null){ _lastAcc = now; return; }
+  const dt = Math.min(now - _lastAcc, 4000);        // 大きな空白(非表示など)はクランプ
+  _lastAcc = now;
+  EQ.target += PROFIT_BASE_PER_MS * (CFG.speed||1) * dt;
+}
+// 決済1回ぶんの損益。勝敗(符号)は約68%勝ちで固定し、金額を目標ペースへ寄せる。
+// → 勝率の見栄えを保ったまま、累計利益のペースを +¥100,000/30分 × speed に追従させる。
+function makeClosePL(){
+  const gap = EQ.target - EQ.closed;                 // +:目標に遅れ / -:先行
+  if(Math.random() < 0.68){
+    // 勝ちトレード：遅れている分だけ利を伸ばす
+    return Math.round(rnd(150, 1600) + Math.max(0, gap) * 0.18);
+  }
+  // 負けトレード：先行している分だけ損を大きめに（行き過ぎを戻す）
+  return -Math.round(rnd(120, 1300) + Math.max(0, -gap) * 0.18);
+}
 const SIG = { markers: [] };
 const CONF = { value: 0.83, target: 0.83 };
 const CCY = ["USD","JPY","EUR","GBP","AUD","NZD","CHF","CAD"];
@@ -790,6 +862,7 @@ function posPnl(p){
 }
 function tickPos(){
   const now = Date.now();
+  advanceProfitTarget();
   POS.forEach(p => {
     const noise = (Math.random()-0.49) * (p.sym==="XAU/USD"?0.08:p.sym.endsWith("JPY")?0.008:0.00008);
     p.now = +(p.now + noise).toFixed(p.sym.endsWith("JPY")?3:(p.sym==="XAU/USD"?2:5));
@@ -799,9 +872,7 @@ function tickPos(){
     const age = now - p.t.getTime();
     const closeP = Math.min(0.5, 0.012 + age/22000);
     if(Math.random() < closeP*0.04){
-      const win = Math.random() < 0.68;
-      const magnitude = win ? rnd(600, 5300) : rnd(280, 2350);
-      const pl = win ? magnitude : -magnitude;
+      const pl = makeClosePL();
       closePos(p, pl);
       setTimeout(()=>{ const j = POS.indexOf(p); if(j>=0) POS.splice(j,1); }, 350);
     }
@@ -1192,6 +1263,35 @@ requestAnimationFrame(kickoff);
   }
   tabs.forEach(t => t.addEventListener("click", () => activate(t.dataset.view)));
 })();
+
+/* ===== カスタム設定（TUNE）配線 ===== */
+function tuneFmtRate(){
+  var s = CFG.speed||1;
+  return "30分で ¥" + Math.round(100000*s).toLocaleString();
+}
+function tuneInit(){
+  var sp=document.getElementById("aSpeed"), spv=document.getElementById("aSpeedV"), rv=document.getElementById("aRateV");
+  if(sp) sp.value = CFG.speed||1;
+  if(spv) spv.textContent = (CFG.speed||1).toFixed(1)+"×";
+  if(rv) rv.textContent = tuneFmtRate();
+}
+function tuneOpen(){ tuneInit(); var ov=document.getElementById("aTune"); if(ov) ov.classList.add("open"); }
+function tuneClose(){ var ov=document.getElementById("aTune"); if(ov) ov.classList.remove("open"); }
+(function(){
+  var sp=document.getElementById("aSpeed"), spv=document.getElementById("aSpeedV"), rv=document.getElementById("aRateV"), ov=document.getElementById("aTune");
+  document.getElementById("aTuneX").addEventListener("click", tuneClose);
+  ov.addEventListener("click", function(e){ if(e.target===ov) tuneClose(); });
+  sp.addEventListener("input", function(e){
+    CFG.speed = parseFloat(e.target.value);
+    spv.textContent = CFG.speed.toFixed(1)+"×";
+    rv.textContent = tuneFmtRate();
+    saveCfg();
+  });
+  document.getElementById("aTuneReset").addEventListener("click", function(){
+    CFG = {speed:1}; saveCfg(); tuneInit();
+  });
+  tuneInit();
+})();
 </script>
 
 <script>
@@ -1202,7 +1302,8 @@ requestAnimationFrame(kickoff);
   document.addEventListener("click",function(){menu.classList.remove("open");btn.classList.remove("on");});
   menu.addEventListener("click",function(e){
     var it=e.target.closest(".gm-i"); if(!it)return;
-    var th=it.dataset.theme;
+    if(it.id==="aTuneOpen"){ if(typeof tuneOpen==="function") tuneOpen(); menu.classList.remove("open");btn.classList.remove("on"); return; }
+    var th=it.dataset.theme; if(!th) return;
     try{localStorage.setItem("aee_theme",th);}catch(x){}
     if(th!=="a") location.href=it.dataset.href+"?cb="+Date.now();
     menu.classList.remove("open");btn.classList.remove("on");
