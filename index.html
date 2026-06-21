@@ -273,6 +273,26 @@
     .panel.h-pos{max-height:none}
     .panel.h-pos .pc{overflow:auto}
   }
+
+  /* ===== 縦置きモニター（ポートレート）= 横長4カラムだと間延びするので2カラムへ再構成 ===== */
+  @media (min-width: 900px) and (orientation: portrait){
+    .m-views{
+      grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+      grid-template-rows:auto repeat(4, minmax(220px,1fr)) minmax(240px,1.2fr);
+      grid-template-areas:
+        "counters counters"
+        "chart1   chart2"
+        "conf     mesh"
+        "world    ccy"
+        "log      log"
+        "pos      pos";
+    }
+    /* カウンターは横長より少し詰める（縦画面は1行に5枚でも余裕） */
+    .counters{grid-template-columns:1.6fr 1fr 1fr 1fr 1fr}
+    /* ログは右の細長い列ではなく、下部の全幅パネルに */
+    .panel.h-log{grid-area:log}
+    .panel.h-log .pc{overflow:auto}
+  }
 </style>
 </head>
 <body>
