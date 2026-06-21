@@ -263,6 +263,7 @@
     .panel[data-chart="1"]{grid-area:chart1}
     .panel[data-chart="2"]{grid-area:chart2}
     .panel[data-chart="3"]{display:none!important}
+    .panel[data-chart="4"]{display:none!important}
     .panel.h-mesh{grid-area:mesh}
     .panel.h-world{grid-area:world}
     .panel.h-ccy{grid-area:ccy}
@@ -274,24 +275,35 @@
     .panel.h-pos .pc{overflow:auto}
   }
 
-  /* ===== 縦置きモニター（ポートレート）= 横長4カラムだと間延びするので2カラムへ再構成 ===== */
+  /* ===== 縦置きモニター（ポートレート）= 横長4カラムだと間延びするので2カラムで敷き詰める ===== */
+  /* 方針: 中身が必ず埋まる canvas系（チャート4枚・mesh・world）とログを引き伸ばし、
+     中身が少ないパネル（conf円・通貨バー・ポジション表）は最小高に固定して余白を作らない。 */
   @media (min-width: 900px) and (orientation: portrait){
     .m-views{
       grid-template-columns:minmax(0,1fr) minmax(0,1fr);
-      grid-template-rows:auto repeat(4, minmax(220px,1fr)) minmax(240px,1.2fr);
+      grid-template-rows:auto 1fr 1fr 1fr auto 1.3fr auto;
       grid-template-areas:
         "counters counters"
         "chart1   chart2"
-        "conf     mesh"
-        "world    ccy"
+        "chart3   chart4"
+        "mesh     world"
+        "conf     ccy"
         "log      log"
         "pos      pos";
+      gap:6px;
     }
-    /* カウンターは横長より少し詰める（縦画面は1行に5枚でも余裕） */
     .counters{grid-template-columns:1.6fr 1fr 1fr 1fr 1fr}
-    /* ログは右の細長い列ではなく、下部の全幅パネルに */
+    /* 3・4枚目チャートを表示（横長では非表示）＋グリッド割り当て */
+    .panel[data-chart="3"],.panel[data-chart="4"]{display:flex!important}
+    .panel[data-chart="3"]{grid-area:chart3}
+    .panel[data-chart="4"]{grid-area:chart4}
+    /* 引き伸ばすのは中身が埋まるパネルだけ。固定パネルは高さを抑える */
+    .panel.h-conf{grid-area:conf;min-height:230px}
+    .panel.h-ccy{grid-area:ccy;min-height:230px}
     .panel.h-log{grid-area:log}
-    .panel.h-log .pc{overflow:auto}
+    .panel.h-log .pc{overflow:hidden}
+    .panel.h-pos{align-self:start}
+    .panel.h-pos .pc{overflow:auto}
   }
 </style>
 </head>
@@ -460,6 +472,22 @@
           </div>
         </div>
       </div>
+
+      <div class="panel h-chart" data-chart="4" style="display:none">
+        <div class="ph"><span>MARKET STREAM · 4</span><span class="live">STREAMING</span></div>
+        <div class="pc" style="padding:0">
+          <canvas class="chartCanvas" id="chart4"></canvas>
+          <div class="chart-overlay">
+            <div>BID <b class="cBid">--</b>　ASK <b class="cAsk">--</b>　SPREAD <b class="cSpr">0.25</b></div>
+            <div style="margin-top:4px">H <b class="cHi">--</b>　L <b class="cLo">--</b>　VOL <b class="cVol">--</b></div>
+          </div>
+          <div class="chart-meta">
+            <div class="px cPx">--</div>
+            <div class="cChg" style="color:var(--green)">--</div>
+            <div style="margin-top:6px;color:var(--dim);font-size:9px;letter-spacing:.14em">REGIME · VOLATILE</div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- ===== POSITIONS ===== -->
@@ -536,7 +564,8 @@ const CHART_POOL = [
 const CHART_DEFS = [
   { id:1, sym:null, showEquity:true,  pe:null },
   { id:2, sym:null, showEquity:false, pe:null },
-  { id:3, sym:null, showEquity:false, pe:null }
+  { id:3, sym:null, showEquity:false, pe:null },
+  { id:4, sym:null, showEquity:false, pe:null }
 ];
 let PE = null; // alias for terminal log / candle cadence — points to slot-0 pe
 
@@ -744,8 +773,13 @@ function setChartCount(n){
   });
   sizeAllCanvases();
 }
+function isPortraitPC(){
+  try{ return window.matchMedia("(min-width: 900px) and (orientation: portrait)").matches; }
+  catch(e){ return false; }
+}
 function pickCountAndLoad(){
-  const n = Math.random() < 0.5 ? 2 : 3;
+  // 縦置きモニターは画面を敷き詰めるため常に4枚。それ以外は従来通り2〜3枚。
+  const n = isPortraitPC() ? 4 : (Math.random() < 0.5 ? 2 : 3);
   setChartCount(n);
   const shuffled = [...CHART_POOL].sort(()=>Math.random()-0.5);
   for(let i=0;i<n;i++) applyChartSlot(i, shuffled[i]);
@@ -1043,7 +1077,7 @@ function drawNet(t){
 }
 
 /* ===== Terminal log (no timestamps) ===== */
-const LOG_MAX = 26;
+const LOG_MAX = 60;  // 縦置きの全幅ログでも埋まるよう多めに保持（overflowで上限クリップ）
 function logLine(level, text){
   const div = document.createElement("div"); div.className="ln";
   const lvClass = {info:"info",signal:"signal",ok:"ok",warn:"warn",err:"err",debug:"debug"}[level]||"info";
@@ -1266,7 +1300,12 @@ function kickoff(){
   requestAnimationFrame(frame);
 }
 
-window.addEventListener("resize", () => { sizeAllCanvases(); buildNet(); });
+let _wasPortraitPC = isPortraitPC();
+window.addEventListener("resize", () => {
+  const p = isPortraitPC();
+  if(p !== _wasPortraitPC){ _wasPortraitPC = p; pickCountAndLoad(); }  // 縦↔横でチャート枚数を組み直す
+  sizeAllCanvases(); buildNet();
+});
 requestAnimationFrame(kickoff);
 
 /* ===== Mobile tab switching ===== */
