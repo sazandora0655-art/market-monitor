@@ -333,7 +333,7 @@
     <div class="spacer"></div>
     <span class="tag" id="fgStreak">STREAK 0</span>
     <div class="it">WIN <b id="fgWin">—</b></div>
-    <div class="clock" id="fgClock">--:--:-- UTC</div>
+    <div class="clock" id="fgClock">FEED --k/s</div>
   </div>
 
   <div class="fg-views" id="fgViews" data-tab="summary">
@@ -453,8 +453,9 @@ function sz(id){const c=$(id);if(!c)return;const dpr=Math.min(window.devicePixel
   const x=c.getContext("2d");x.setTransform(dpr,0,0,dpr,0,0);cv[id]={w:r.width,h:r.height,ctx:x};}
 function sizeAll(){["fgCh0","fgCh1","fgCh2","fgStkSpark","fgForce","fgPulse","fgAc1","fgAc2","fgAc3","fgAc4"].forEach(sz);buildForce();}
 
-function tickClock(){$("fgClock").textContent=new Date().toLocaleTimeString("en-GB",{hour12:false,timeZone:"Asia/Tokyo"});}
-setInterval(tickClock,1000);tickClock();
+// 時計は廃止 → データフィードのスループット（非時刻メトリクス）を表示
+function tickClock(){$("fgClock").textContent="FEED "+rnd(0.9,2.6).toFixed(2)+"k/s";}
+setInterval(tickClock,1200);tickClock();
 
 let bal=rnd(120000,260000),start=bal,sess=0,trades=0,wins=0,seq=rndi(4,9);
 
@@ -648,9 +649,10 @@ function drawForce(t){const o=cv["fgForce"];if(!o||o.w===0)return;const{ctx,w:W,
     if(FN.length<=40||n.r>=4.2){ctx.fillStyle="rgba(210,210,228,.6)";ctx.font="8px JetBrains Mono, monospace";ctx.fillText(n.label,n.x+n.r+3,n.y+2.5);}});
 }
 
+let evtSeq=rndi(4000,9000);                                   // 時刻の代わりに使う通し番号（イベントID）
 const LOGMAX=20;
 function log(lv,txt){const d=document.createElement("div");d.className="tl-item "+lv;
-  const tm=new Date().toLocaleTimeString("en-GB",{hour12:false,timeZone:"Asia/Tokyo"});
+  const tm="#"+(evtSeq++);                                    // 時刻表示は廃止 → イベントID
   d.innerHTML=`<span class="dot"></span><span class="tt">${tm}</span><span class="xx">${txt}</span>`;
   const r=$("fgLog");r.insertBefore(d,r.firstChild);while(r.childElementCount>LOGMAX)r.removeChild(r.lastChild);}
 
@@ -660,7 +662,7 @@ const TAPEMAX=14;
 function tapeTick(){const r=$("fgTape");if(!r)return;
   const buy=Math.random()<0.5,px=Math.max(1,CH[0].p+rndi(-9,9)),sz=rnd(0.01,3.2).toFixed(2);
   const d=document.createElement("div");d.className="tape-row "+(buy?"b":"s");
-  const tm=new Date().toLocaleTimeString("en-GB",{hour12:false,timeZone:"Asia/Tokyo"});
+  const tm="#"+(evtSeq++);                                    // 時刻表示は廃止 → イベントID
   d.innerHTML=`<span class="tt">${tm}</span><span class="sd">${buy?"BUY":"SELL"}</span><span class="px">${px.toLocaleString()}</span><span class="sz">${sz}</span><span class="vn">${pick(VENUES)}</span>`;
   r.insertBefore(d,r.firstChild);while(r.childElementCount>TAPEMAX)r.removeChild(r.lastChild);}
 const NOISE=[
