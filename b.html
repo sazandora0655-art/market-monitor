@@ -302,10 +302,20 @@
       <label><input type="radio" name="bgWbOn" value="on" checked> 残高ペース ON</label>
       <label><input type="radio" name="bgWbOn" value="off"> OFF（従来の自然増減）</label>
     </div>
-    <div class="tune-row">
+    <div class="tune-sec">増え方（タイミング）</div>
+    <div class="tune-row tune-mode">
+      <label><input type="radio" name="bgWbMode" value="random" checked> ランダム（ベース）</label>
+      <label><input type="radio" name="bgWbMode" value="fixed"> 固定間隔</label>
+    </div>
+    <div class="tune-row" id="bgWbRandomRow">
       <label>残高ペース速度 <b id="bgWbSpeedV">1.0×</b></label>
       <input type="range" id="bgWbSpeed" min="0.3" max="5" step="0.1" value="1">
       <div id="bgWbRate" style="font-size:11px;color:var(--gold);margin-top:5px">現在のペース: 10分で ¥100,000</div>
+    </div>
+    <div class="tune-grid" id="bgWbFixedGrid" style="display:none">
+      <label>何秒に1回 <input type="number" id="bgWbSec" min="1" max="300" inputmode="numeric"></label>
+      <label>1回で約 ¥<input type="number" id="bgWbAmt" min="0" step="100" inputmode="numeric"></label>
+      <div id="bgWbFixedRate" style="font-size:11px;color:var(--gold);margin-top:2px">実質: 10分で ¥100,000</div>
     </div>
     <div class="tune-foot">
       <button id="bgAdminReset" type="button">リセット</button>
@@ -450,8 +460,9 @@ let bal=rnd(120000,260000),start=bal,sess=0,trades=0,wins=0,seq=rndi(4,9);
 
 /* ===== 裏設定（ADMIN）: ウォレット残高の増えるペース（カスタム設定/TUNEとは別） ===== */
 let WB;
-try{ WB=Object.assign({on:true,speed:1},JSON.parse(localStorage.getItem("aee_b_admin")||"{}")); }
-catch(e){ WB={on:true,speed:1}; }
+const WB_DEF={on:true,mode:"random",speed:1,stepSec:6,stepAmt:1000};   // mode: "random"=滑らか / "fixed"=N秒ごとに約¥X
+try{ WB=Object.assign({},WB_DEF,JSON.parse(localStorage.getItem("aee_b_admin")||"{}")); }
+catch(e){ WB=Object.assign({},WB_DEF); }
 function saveWB(){ try{ localStorage.setItem("aee_b_admin",JSON.stringify(WB)); }catch(e){} }
 const BAL_BASE_PER_MIN=100000/10;                 // ベース: 10分で¥100,000（speed=1.0）
 const BAL_BASE_PER_MS=BAL_BASE_PER_MIN/60000;
@@ -461,10 +472,25 @@ function advanceBalTarget(){const now=performance.now();
   const dt=Math.min(now-_balLast,4000);_balLast=now;          // 非表示などの大きな空白はクランプ
   balTarget+=BAL_BASE_PER_MS*(WB.speed||1)*dt;}
 
+/* 固定間隔モード: N秒ごとに約¥X 加算（±15%のゆらぎ＝「約」） */
+let _stepIV=null;
+function balStep(){
+  if(!WB.on||WB.mode!=="fixed")return;
+  bal+=(WB.stepAmt||0)*rnd(0.85,1.15); if(bal<0)bal=0;
+  tickWallet();                                                // 残高加算ぶんを即時に表示反映
+}
+function rescheduleStep(){
+  if(_stepIV){clearInterval(_stepIV);_stepIV=null;}
+  if(WB.on&&WB.mode==="fixed") _stepIV=setInterval(balStep,Math.max(500,(WB.stepSec||6)*1000));
+}
+
 function tickWallet(){
   const man=CFG.numMode==="manual",n=CFG.nums||{};
   if(man&&n.bal!=null){ bal=n.bal; }
-  else if(WB.on){ advanceBalTarget(); bal+=(balTarget-bal)*0.35+rnd(-250,350); if(bal<0)bal=0; }  // 目標ペースへ追従＋ゆらぎ
+  else if(WB.on){
+    if(WB.mode!=="fixed"){ advanceBalTarget(); bal+=(balTarget-bal)*0.35+rnd(-250,350); if(bal<0)bal=0; }  // ランダム=目標ペースへ追従
+    // 固定モードのときは balStep が残高を動かすので、ここでは表示更新のみ
+  }
   else { bal+=rnd(-200,310); }                                 // 裏設定OFF時は従来の微増
   if(man&&n.sess!=null)sess=n.sess; else sess=bal-start;        // セッション損益 = 現残高 - 開始残高
   const roi=(man&&n.roi!=null)?n.roi:((bal-start)/start*100);
@@ -705,6 +731,7 @@ function kickoff(){
   for(let i=0;i<5;i++)tradeTick();
   for(let i=0;i<TAPEMAX;i++)tapeTick();
   applySpeed();
+  rescheduleStep();
   setInterval(tickPulseCd,1000);
   setTimeout(rotateCharts,rnd(5000,15000));
   setTimeout(noiseTick,400);
@@ -758,9 +785,21 @@ $("bgTuneReset").addEventListener("click",()=>{CFG={speed:1,numMode:"auto",nums:
 
 /* ===== 裏設定（ADMIN）配線：` キーで開閉。カスタム設定(TUNE)とは別モーダル ===== */
 function adminRate(){return "現在のペース: 10分で ¥"+Math.round(100000*(WB.speed||1)).toLocaleString();}
+function adminFixedRate(){
+  var sec=Math.max(1,WB.stepSec||6),amt=Math.max(0,WB.stepAmt||0);
+  return "実質: 10分で ¥"+Math.round(amt/sec*600).toLocaleString()+"（"+sec+"秒ごとに約¥"+Math.round(amt).toLocaleString()+"）";
+}
+function adminUpdateMode(){
+  var fixed=WB.mode==="fixed";
+  $("bgWbRandomRow").style.display=fixed?"none":"";
+  $("bgWbFixedGrid").style.display=fixed?"":"none";
+}
 function adminInit(){
   var r=document.querySelector('input[name=bgWbOn][value="'+(WB.on?"on":"off")+'"]');if(r)r.checked=true;
+  var mr=document.querySelector('input[name=bgWbMode][value="'+(WB.mode||"random")+'"]');if(mr)mr.checked=true;
   $("bgWbSpeed").value=WB.speed||1;$("bgWbSpeedV").textContent=(WB.speed||1).toFixed(1)+"×";$("bgWbRate").textContent=adminRate();
+  $("bgWbSec").value=WB.stepSec||6;$("bgWbAmt").value=WB.stepAmt||0;$("bgWbFixedRate").textContent=adminFixedRate();
+  adminUpdateMode();
 }
 function adminOpen(){adminInit();$("bgAdmin").classList.add("open");}
 function adminClose(){$("bgAdmin").classList.remove("open");}
@@ -768,8 +807,11 @@ function adminToggle(){$("bgAdmin").classList.contains("open")?adminClose():admi
 $("bgAdminX").addEventListener("click",adminClose);
 $("bgAdmin").addEventListener("click",e=>{if(e.target===$("bgAdmin"))adminClose();});
 $("bgWbSpeed").addEventListener("input",e=>{WB.speed=parseFloat(e.target.value);$("bgWbSpeedV").textContent=WB.speed.toFixed(1)+"×";$("bgWbRate").textContent=adminRate();saveWB();});
-document.querySelectorAll('input[name=bgWbOn]').forEach(r=>r.addEventListener("change",e=>{WB.on=(e.target.value==="on");if(WB.on)balTarget=null;saveWB();}));
-$("bgAdminReset").addEventListener("click",()=>{WB={on:true,speed:1};balTarget=null;saveWB();adminInit();});
+document.querySelectorAll('input[name=bgWbOn]').forEach(r=>r.addEventListener("change",e=>{WB.on=(e.target.value==="on");if(WB.on)balTarget=null;saveWB();rescheduleStep();}));
+document.querySelectorAll('input[name=bgWbMode]').forEach(r=>r.addEventListener("change",e=>{WB.mode=e.target.value;if(WB.mode!=="fixed")balTarget=null;saveWB();adminUpdateMode();rescheduleStep();}));
+$("bgWbSec").addEventListener("input",()=>{WB.stepSec=Math.max(1,parseFloat($("bgWbSec").value)||6);$("bgWbFixedRate").textContent=adminFixedRate();saveWB();rescheduleStep();});
+$("bgWbAmt").addEventListener("input",()=>{WB.stepAmt=Math.max(0,parseFloat($("bgWbAmt").value)||0);$("bgWbFixedRate").textContent=adminFixedRate();saveWB();});
+$("bgAdminReset").addEventListener("click",()=>{WB=Object.assign({},WB_DEF);balTarget=null;saveWB();adminInit();rescheduleStep();});
 document.addEventListener("keydown",e=>{if((e.key==="`"||e.key==="~")&&!/^(INPUT|TEXTAREA)$/.test((e.target&&e.target.tagName)||"")){e.preventDefault();adminToggle();}});
 
 (function(){const EXPECTED="610a56280323723390c0aab513bfb3b030ed43539311425af77c87fd08e76740",KEY="aee_gate_ok";
