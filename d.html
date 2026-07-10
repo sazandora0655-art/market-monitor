@@ -122,6 +122,9 @@
     animation:arow .55s cubic-bezier(.22,.7,.25,1)}
   @keyframes arow{from{opacity:0;transform:translateX(26px)}to{opacity:1;transform:none}}
   .arow .dt{width:5px;height:5px;background:var(--gold);transform:rotate(45deg);flex:none}
+  .arow .acct{width:24px;height:24px}
+  .arow .acct .ring{inset:-2px;animation-play-state:running;opacity:.75}
+  .arow .acct .vfy,.arow .acct .pres{display:none}
   .arow .sy{font-family:var(--mono);font-size:8.6px;letter-spacing:.14em;color:var(--gold);width:60px;flex:none}
   .arow .nm{font-size:12px;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0}
   .arow .ev{font-family:var(--mono);font-size:7.8px;letter-spacing:.13em;color:var(--dim2);text-transform:uppercase;
@@ -174,8 +177,38 @@
 
   .lst h3{font-family:var(--serif);font-weight:400;font-size:19px;margin-top:12px;letter-spacing:-.2px;color:#fff}
   .lst.feat h3{font-size:26px;margin-top:14px}
-  .lst .vn{font-family:var(--mono);font-size:8.2px;letter-spacing:.11em;color:var(--dim2);margin-top:7px;
-    text-transform:uppercase}
+
+  /* ---------- operator account: generated icon, gold ring, presence dot ----------
+     NOTE: the class is .acct, not .av — .av is already taken by the "Available" status badge. */
+  .who{display:flex;align-items:center;gap:11px;margin-top:14px}
+  .acct{position:relative;width:38px;height:38px;flex:none}
+  .lst.feat .acct{width:52px;height:52px}
+  .acct .ring{position:absolute;inset:-3px;border-radius:50%;
+    background:conic-gradient(from 0deg,transparent 0 52%,var(--goldd) 68%,var(--gold) 80%,transparent 92%);
+    animation:spin 5.5s linear infinite;animation-play-state:paused;opacity:.6;transition:opacity .3s}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .lst:hover .acct .ring,.lst.spot .acct .ring{animation-play-state:running;opacity:1}
+  .acct .in{position:absolute;inset:0;border-radius:50%;overflow:hidden;border:1px solid var(--line2);
+    background:#15141a;box-shadow:inset 0 0 12px rgba(0,0,0,.6)}
+  .acct .in svg{width:100%;height:100%;display:block}
+  .acct .in::after{content:"";position:absolute;inset:0;border-radius:50%;
+    background:radial-gradient(circle at 32% 26%,rgba(255,255,255,.14),transparent 58%)}
+  .acct .pres{position:absolute;right:-1px;bottom:-1px;width:10px;height:10px;border-radius:50%;
+    background:var(--dim2);border:2px solid var(--bg)}
+  .acct .pres.up{background:var(--pos);animation:beacon 2.2s ease-out infinite}
+  .acct .vfy{position:absolute;left:-3px;top:-3px;width:13px;height:13px;border-radius:50%;background:var(--gold);
+    color:#0b0b0d;font-size:8px;line-height:13px;text-align:center;font-weight:700;
+    transform:scale(0);transition:transform .35s cubic-bezier(.3,1.5,.5,1)}
+  html.reveal .lst.in .acct .vfy,html:not(.reveal) .acct .vfy{transform:scale(1)}
+  html.reveal .lst.in .acct{animation:pop .55s cubic-bezier(.2,1.4,.4,1)}
+  @keyframes pop{from{transform:scale(.72);opacity:0}to{transform:none;opacity:1}}
+
+  .wm{min-width:0}
+  .vn2{font-size:12.6px;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    display:flex;align-items:center;gap:6px}
+  .vn2 .hnd{font-family:var(--mono);font-size:9px;color:var(--gold);letter-spacing:.04em}
+  .hd2{font-family:var(--mono);font-size:7.6px;letter-spacing:.13em;color:var(--dim2);margin-top:3px;
+    text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .lst .ds{display:none}
   .lst.feat .ds{display:block;font-size:12.8px;color:var(--txt2);margin-top:13px;max-width:60ch}
   .eqwrap{position:relative;margin-top:15px}
@@ -215,8 +248,10 @@
   .legal b{color:var(--dim);font-weight:400}
 
   @media(prefers-reduced-motion:reduce){
-    .track,.lst.feat::before,.eqdot.on,.ah .live i,body::before{animation:none}
+    .track,.lst.feat::before,.eqdot.on,.ah .live i,body::before,
+    .acct .ring,.acct .pres.up,.arow .acct .ring{animation:none}
     html.reveal .lst{opacity:1;transform:none;transition:none}
+    html.reveal .lst.in .acct{animation:none}
     .badge.one .pulse{animation:none}
     .arow{animation:none}
   }
@@ -360,6 +395,33 @@ function seeded(str){let x=2166136261>>>0;
   return()=>{x^=x<<13;x>>>=0;x^=x>>>17;x^=x<<5;x>>>=0;return x/4294967296;};}
 const inr=(r,a,b)=>a+r()*(b-a);
 
+/* ---------- operator icon: a symmetric sigil derived from the symbol, identical on every load ----------
+   No third-party photographs are used: each account icon is generated here, in the page. */
+const ICON_PAL=["#c9a961","#e3ca8f","#8f7638","#a98a4a","#6b5a30","#d8bf83"];
+function iconSVG(seed){
+  const r=seeded("icon:"+seed);
+  const c1=ICON_PAL[Math.floor(r()*ICON_PAL.length)];
+  let c2=ICON_PAL[Math.floor(r()*ICON_PAL.length)];
+  if(c2===c1) c2=ICON_PAL[(ICON_PAL.indexOf(c1)+2)%ICON_PAL.length];
+  const dens=0.46+r()*0.16;
+  let cells="";
+  for(let y=0;y<5;y++) for(let x=0;x<3;x++){
+    if(r()>dens) continue;
+    const c=r()<0.34?c2:c1;
+    cells+='<rect x="'+x+'" y="'+y+'" width="1" height="1" fill="'+c+'"/>';
+    if(x<2) cells+='<rect x="'+(4-x)+'" y="'+y+'" width="1" height="1" fill="'+c+'"/>';
+  }
+  return '<svg viewBox="0 0 5 5" preserveAspectRatio="none" aria-hidden="true">'+
+    '<rect width="5" height="5" fill="#15141a"/>'+cells+'</svg>';
+}
+const isOnline=seed=>seeded("presence:"+seed)()<0.45;
+function avatarHTML(seed,verified){
+  return '<span class="acct"><span class="ring"></span>'+
+    '<span class="in">'+iconSVG(seed)+'</span>'+
+    (verified?'<span class="vfy">✓</span>':'')+
+    '<span class="pres'+(isOnline(seed)?" up":"")+'"></span></span>';
+}
+
 /* ---------- taxonomy ---------- */
 const DESKS=["FX","EQUITIES","FUTURES","INDICES","COMMODITIES","DIGITAL","MULTI-ASSET","EXECUTION"];
 const FX_FAMILIES=["Trend following","Grid & rebalancing","Carry & rates","Session breakout","Mean reversion",
@@ -391,6 +453,12 @@ const PROFILE={
 };
 const VENDORS=["Hidden Genius Research","Neurocapital","Sigma Research","Quant Oni","Deepedge",
   "Doctor Alpha","Kioi Capital","Helios Labs"];
+const HANDLE={"Hidden Genius Research":"@hidden_genius","Neurocapital":"@neurocapital",
+  "Sigma Research":"@sigma_res","Quant Oni":"@quant_oni","Deepedge":"@deepedge",
+  "Doctor Alpha":"@dr_alpha","Kioi Capital":"@kioi_cap","Helios Labs":"@helios_labs"};
+const TIER={"Hidden Genius Research":"Tier I","Neurocapital":"Tier I","Sigma Research":"Tier I",
+  "Quant Oni":"Tier II","Deepedge":"Tier II","Doctor Alpha":"Tier I","Kioi Capital":"Tier II",
+  "Helios Labs":"Tier II"};
 const SINCE={"Hidden Genius Research":2016,"Neurocapital":2014,"Sigma Research":2017,"Quant Oni":2015,
   "Deepedge":2019,"Doctor Alpha":2018,"Kioi Capital":2015,"Helios Labs":2018};
 const BASE=["Helios","Medusa","Orion","Athena","Vega","Titan","Cerberus","Nebula","Pulsar","Helical",
@@ -558,7 +626,9 @@ function card(l){
     '<div class="lst-top"><span class="tk">'+l.tk+'</span>'+
       '<span class="badge '+s[1]+'"><span class="pulse"></span>'+s[0]+'</span></div>'+
     '<h3>'+l.name+'</h3>'+
-    '<div class="vn">'+l.vendor+' · vendor since '+l.since+'</div>'+
+    '<div class="who">'+avatarHTML(l.tk,true)+
+      '<div class="wm"><div class="vn2">'+l.vendor+' <span class="hnd">'+HANDLE[l.vendor]+'</span></div>'+
+      '<div class="hd2">'+TIER[l.vendor]+' verified · operator since '+l.since+'</div></div></div>'+
     (l.ds?'<p class="ds">'+l.ds+'</p>':'')+
     '<div class="eqwrap"><canvas class="eq" data-seed="'+l.tk+l.name+'"></canvas><i class="eqdot"></i></div>'+
     '<dl class="mx">'+mx+'</dl>'+
@@ -640,7 +710,7 @@ const feedEl=$("feed"); let actI=0;
 function pushAct(){
   const a=ACTS[actI++%ACTS.length];
   const row=document.createElement("div"); row.className="arow";
-  row.innerHTML='<span class="dt"></span><span class="sy">'+a[0]+'</span>'+
+  row.innerHTML=avatarHTML(a[0],false)+'<span class="sy">'+a[0]+'</span>'+
     '<span class="nm">'+a[1]+'</span><span class="ev">'+a[2]+'</span>'+
     '<span class="am">'+a[3]+'</span><span class="ag"></span>';
   feedEl.insertBefore(row,feedEl.firstChild);
