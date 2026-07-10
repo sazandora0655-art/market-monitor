@@ -23,7 +23,13 @@
   *{box-sizing:border-box;margin:0;padding:0}
   html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
   body{background:var(--bg);color:var(--txt);font-family:var(--sans);font-size:15px;line-height:1.6;
-    -webkit-font-smoothing:antialiased}
+    -webkit-font-smoothing:antialiased;position:relative}
+  /* slow drifting glow — pure decoration, never a number */
+  body::before{content:"";position:fixed;inset:-30% -10%;z-index:-1;pointer-events:none;
+    background:radial-gradient(620px 420px at 22% 18%,rgba(201,169,97,.055),transparent 62%),
+               radial-gradient(560px 380px at 82% 72%,rgba(201,169,97,.04),transparent 60%);
+    animation:drift 26s ease-in-out infinite alternate}
+  @keyframes drift{from{transform:translate3d(-2%,-1%,0) scale(1)}to{transform:translate3d(3%,2%,0) scale(1.08)}}
   canvas{display:block}
   .wrap{max-width:1360px;margin:0 auto;padding:0 20px}
   .num{font-family:var(--mono);font-variant-numeric:tabular-nums}
@@ -63,9 +69,12 @@
   .tape::before,.tape::after{content:"";position:absolute;top:0;bottom:0;width:70px;z-index:2;pointer-events:none}
   .tape::before{left:0;background:linear-gradient(90deg,var(--bg2),transparent)}
   .tape::after{right:0;background:linear-gradient(270deg,var(--bg2),transparent)}
-  .track{display:flex;width:max-content;animation:slide 72s linear infinite}
+  .track{display:flex;width:max-content;animation:slide 44s linear infinite}
   .tape:hover .track{animation-play-state:paused}
   @keyframes slide{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+  .tape.rev .track{animation:slideR 56s linear infinite}
+  @keyframes slideR{from{transform:translateX(-50%)}to{transform:translateX(0)}}
+  .tape.rev{border-top:1px solid var(--line);border-bottom:none}
   .tp{display:flex;align-items:center;gap:9px;padding:9px 22px;border-right:1px solid var(--line);
     font-family:var(--mono);font-size:8.8px;letter-spacing:.12em;color:var(--dim);white-space:nowrap;text-transform:uppercase}
   .tp .sy{color:var(--gold)}
@@ -98,6 +107,29 @@
   .fxbar.show{display:flex}
   .fxbar::-webkit-scrollbar{display:none}
 
+  /* ---------- live activity ---------- */
+  .acti{border-bottom:1px solid var(--line);background:var(--bg2);overflow:hidden}
+  .acti .wrap{padding-top:13px;padding-bottom:13px}
+  .ah{display:flex;align-items:center;gap:9px;font-family:var(--mono);font-size:8.2px;letter-spacing:.2em;
+    color:var(--dim2);text-transform:uppercase;margin-bottom:10px}
+  .ah .live{margin-left:auto;display:flex;align-items:center;gap:6px;color:var(--pos);letter-spacing:.14em}
+  .ah .live i{width:5px;height:5px;border-radius:50%;background:var(--pos);
+    animation:beacon 1.7s ease-out infinite}
+  @keyframes beacon{0%{box-shadow:0 0 0 0 rgba(95,163,124,.55)}70%{box-shadow:0 0 0 7px rgba(95,163,124,0)}100%{box-shadow:0 0 0 0 rgba(95,163,124,0)}}
+  .feed{display:grid;gap:1px;background:var(--line);border:1px solid var(--line)}
+  @media(min-width:900px){.feed{grid-template-columns:repeat(2,1fr)}}
+  .arow{background:var(--bg);display:flex;align-items:center;gap:11px;padding:10px 13px;
+    animation:arow .55s cubic-bezier(.22,.7,.25,1)}
+  @keyframes arow{from{opacity:0;transform:translateX(26px)}to{opacity:1;transform:none}}
+  .arow .dt{width:5px;height:5px;background:var(--gold);transform:rotate(45deg);flex:none}
+  .arow .sy{font-family:var(--mono);font-size:8.6px;letter-spacing:.14em;color:var(--gold);width:60px;flex:none}
+  .arow .nm{font-size:12px;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0}
+  .arow .ev{font-family:var(--mono);font-size:7.8px;letter-spacing:.13em;color:var(--dim2);text-transform:uppercase;
+    white-space:nowrap;display:none}
+  @media(min-width:620px){.arow .ev{display:block}}
+  .arow .am{font-family:var(--mono);font-size:11px;color:#fff;font-variant-numeric:tabular-nums;flex:none}
+  .arow .ag{font-family:var(--mono);font-size:7.2px;letter-spacing:.12em;color:var(--dim2);width:44px;text-align:right;flex:none}
+
   /* ---------- grid ---------- */
   main{padding:26px 0 40px}
   .grid{display:grid;grid-template-columns:1fr;gap:1px;background:var(--line);border:1px solid var(--line)}
@@ -117,6 +149,15 @@
   .lst:hover::after{transform:scaleX(1)}
   .lst.feat{background:linear-gradient(160deg,#141118,var(--surf))}
   @media(min-width:640px){.lst.feat{grid-column:span 2}}
+  /* a shimmer sweeps across the flagship every few seconds */
+  .lst.feat::before{content:"";position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(105deg,transparent 38%,rgba(201,169,97,.10) 48%,transparent 58%);
+    transform:translateX(-120%);animation:sheen 7s ease-in-out infinite}
+  @keyframes sheen{0%,62%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
+  /* the spotlight walks from card to card */
+  .lst.spot{background:var(--surf)}
+  .lst.spot::after{transform:scaleX(1)}
+  .lst.spot .eqdot{box-shadow:0 0 0 4px rgba(201,169,97,.18),0 0 12px var(--gold)}
 
   .lst-top{display:flex;align-items:center;gap:9px}
   .lst .tk{font-family:var(--mono);font-size:9px;letter-spacing:.18em;color:var(--gold)}
@@ -137,8 +178,14 @@
     text-transform:uppercase}
   .lst .ds{display:none}
   .lst.feat .ds{display:block;font-size:12.8px;color:var(--txt2);margin-top:13px;max-width:60ch}
-  .lst .eq{width:100%;height:46px;margin-top:15px}
+  .eqwrap{position:relative;margin-top:15px}
+  .lst .eq{width:100%;height:46px}
   .lst.feat .eq{height:86px}
+  .eqdot{position:absolute;width:5px;height:5px;border-radius:50%;background:var(--gold);
+    transform:translate(-50%,-50%);opacity:0;transition:opacity .4s;pointer-events:none;
+    box-shadow:0 0 8px var(--gold)}
+  .eqdot.on{opacity:1;animation:dotp 2.4s ease-in-out infinite}
+  @keyframes dotp{0%,100%{box-shadow:0 0 6px var(--gold)}50%{box-shadow:0 0 13px var(--gold),0 0 0 3px rgba(201,169,97,.14)}}
 
   .mx{display:flex;margin-top:15px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
   .mx div{flex:1;padding:10px 0;border-right:1px solid var(--line)}
@@ -168,9 +215,10 @@
   .legal b{color:var(--dim);font-weight:400}
 
   @media(prefers-reduced-motion:reduce){
-    .track{animation:none}
+    .track,.lst.feat::before,.eqdot.on,.ah .live i,body::before{animation:none}
     html.reveal .lst{opacity:1;transform:none;transition:none}
     .badge.one .pulse{animation:none}
+    .arow{animation:none}
   }
 
   /* ---------- gate ---------- */
@@ -273,9 +321,20 @@
   </div>
 </div>
 
+<!-- live activity: rows stream in, every figure in them is a constant -->
+<div class="acti">
+  <div class="wrap">
+    <div class="ah">Recent activity across the venue
+      <span class="live"><i></i>Live</span></div>
+    <div class="feed" id="feed"></div>
+  </div>
+</div>
+
 <main>
   <div class="wrap"><div class="grid" id="grid"></div></div>
 </main>
+
+<div class="tape rev"><div class="track" id="trackB"></div></div>
 
 <footer id="footer">
   <div class="wrap">
@@ -394,6 +453,19 @@ const tpHTML=TAPE.map(t=>'<div class="tp"><span class="dt"></span><span class="s
   '<span class="ev">'+t[1]+'</span><span class="am">'+t[2]+'</span></div>').join("");
 $("track").innerHTML=tpHTML+tpHTML;   /* duplicated for a seamless -50% loop */
 
+/* second tape, running the other way, carrying process events rather than settlements */
+const TAPE_B=[
+  ["ATH-6","Due diligence opened","Family office VII"],["MMK-8","Escrow lodged","Sovereign desk"],
+  ["ZNT-7","Replication complete","Multi-strat fund"],["PLS-3","Capacity re-verified","Verification desk"],
+  ["LVT-4","Vendor attestation filed","Tier-1 allocator"],["KRK-2","Licence delivered","Endowment B"],
+  ["PHX-9","Data room extended","Private fund-12"],["OVL-4","Escrow released","Wealth trust C"],
+  ["NBL-2","Reference check cleared","Accredited #4471"],["SPC-3","Track record attested","Pension desk A"],
+  ["HLC-6","Source delivered","Family office VII"],["DGA-8","Custody confirmed","Sovereign desk"]
+];
+const tpBHTML=TAPE_B.map(t=>'<div class="tp"><span class="dt"></span><span class="sy">'+t[0]+'</span>'+
+  '<span class="ev">'+t[1]+'</span><span class="am" style="color:var(--dim)">'+t[2]+'</span></div>').join("");
+$("trackB").innerHTML=tpBHTML+tpBHTML;
+
 /* ---------- equity curve: same shape every load, drawn in once on reveal ---------- */
 function curve(seed,n){const r=seeded(seed),out=[];let v=100,drift=inr(r,.5,1.4);
   for(let i=0;i<n;i++){const shock=(r()-.42)*3.2; v+=drift+shock; if(r()<.08) v-=r()*5.5; out.push(v);} return out;}
@@ -401,7 +473,7 @@ const REDUCED=matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 function drawEq(cv,seed,progress){
   const ctx=cv.getContext("2d"),dpr=Math.min(2,devicePixelRatio||1);
-  const w=cv.clientWidth,h=cv.clientHeight; if(!w||!h) return;
+  const w=cv.clientWidth,h=cv.clientHeight; if(!w||!h) return null;
   if(cv.width!==w*dpr||cv.height!==h*dpr){cv.width=w*dpr;cv.height=h*dpr;}
   ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,w,h);
   const d=curve(seed,54),mn=Math.min(...d),mx=Math.max(...d),rg=(mx-mn)||1;
@@ -414,15 +486,26 @@ function drawEq(cv,seed,progress){
   ctx.lineTo(x(cut-1),h); ctx.closePath(); ctx.fillStyle=g; ctx.fill();
   ctx.beginPath(); seg.forEach((v,i)=>i?ctx.lineTo(x(i),y(v)):ctx.moveTo(x(i),y(v)));
   ctx.strokeStyle="#c9a961"; ctx.lineWidth=1.25; ctx.stroke();
+  return {x:x(cut-1), y:y(seg[cut-1])};     /* leading point, for the travelling dot */
+}
+function placeDot(cv,pt,lit){
+  const dot=cv.parentNode.querySelector(".eqdot"); if(!dot||!pt) return;
+  dot.style.left=pt.x+"px"; dot.style.top=pt.y+"px";
+  if(lit) dot.classList.add("on");
 }
 function animateEq(cv){
   const seed=cv.dataset.seed;
-  if(REDUCED){ drawEq(cv,seed,1); cv.dataset.done="1"; return; }
-  const dur=680, t0=performance.now();
+  if(REDUCED){ placeDot(cv,drawEq(cv,seed,1),true); cv.dataset.done="1"; return; }
+  const dur=760, t0=performance.now();
+  const dot=cv.parentNode.querySelector(".eqdot");
+  if(dot) dot.classList.remove("on");
   (function step(t){
     const p=Math.min(1,(t-t0)/dur);
-    drawEq(cv,seed,p*p*(3-2*p));           /* smoothstep */
-    if(p<1) requestAnimationFrame(step); else cv.dataset.done="1";
+    const pt=drawEq(cv,seed,p*p*(3-2*p));   /* smoothstep */
+    placeDot(cv,pt,false);
+    if(dot) dot.style.opacity="1";
+    if(p<1) requestAnimationFrame(step);
+    else { cv.dataset.done="1"; if(dot){dot.style.opacity="";dot.classList.add("on");} }
   })(t0);
 }
 
@@ -433,7 +516,10 @@ if(CAN_REVEAL) document.documentElement.classList.add("reveal");
 function show(el,animate){
   el.classList.add("in");
   const cv=el.querySelector("canvas.eq");
-  if(cv&&!cv.dataset.done){ animate?animateEq(cv):(drawEq(cv,cv.dataset.seed,1),cv.dataset.done="1"); }
+  if(cv&&!cv.dataset.done){
+    if(animate) animateEq(cv);
+    else { placeDot(cv,drawEq(cv,cv.dataset.seed,1),true); cv.dataset.done="1"; }
+  }
 }
 const io = CAN_REVEAL ? new IntersectionObserver(es=>{
   es.forEach(e=>{ if(!e.isIntersecting) return; show(e.target,true); io.unobserve(e.target); });
@@ -474,7 +560,7 @@ function card(l){
     '<h3>'+l.name+'</h3>'+
     '<div class="vn">'+l.vendor+' · vendor since '+l.since+'</div>'+
     (l.ds?'<p class="ds">'+l.ds+'</p>':'')+
-    '<canvas class="eq" data-seed="'+l.tk+l.name+'"></canvas>'+
+    '<div class="eqwrap"><canvas class="eq" data-seed="'+l.tk+l.name+'"></canvas><i class="eqdot"></i></div>'+
     '<dl class="mx">'+mx+'</dl>'+
     '<div class="tagrow"><span class="tag">'+l.desk+'</span><span class="tag g">'+l.fam+'</span></div>'+
     '<div class="lst-foot"><div><div class="pl">Licence fee</div><div class="pv">'+usd(l.price)+'</div></div>'+
@@ -515,7 +601,62 @@ document.querySelector(".tools").addEventListener("click",e=>{const s=e.target.c
 
 let rt;
 addEventListener("resize",()=>{clearTimeout(rt);rt=setTimeout(()=>{
-  grid.querySelectorAll("canvas.eq").forEach(cv=>{ if(cv.dataset.done) drawEq(cv,cv.dataset.seed,1); });},180);});
+  grid.querySelectorAll("canvas.eq").forEach(cv=>{
+    if(cv.dataset.done) placeDot(cv,drawEq(cv,cv.dataset.seed,1),true); });},180);});
+
+/* hover re-draws the curve — the shape and every figure stay identical */
+grid.addEventListener("mouseenter",e=>{
+  const el=e.target;                     /* only the card itself, not its children */
+  if(REDUCED||!el.classList||!el.classList.contains("lst")) return;
+  const cv=el.querySelector("canvas.eq"); if(cv&&cv.dataset.done){ cv.dataset.done=""; animateEq(cv); }
+},true);
+
+/* rAF stops in a hidden tab: finish any half-drawn curve when the page comes back */
+addEventListener("visibilitychange",()=>{
+  if(document.visibilityState!=="visible") return;
+  grid.querySelectorAll(".lst.in canvas.eq").forEach(cv=>{
+    if(!cv.dataset.done){ placeDot(cv,drawEq(cv,cv.dataset.seed,1),true); cv.dataset.done="1"; }});
+});
+
+/* ---------- live activity feed (fixed amounts, cycled in order) ---------- */
+const ACTS=[
+  ["HLX-9","Helios Alpha Engine","Exclusive licence","$1,050,000"],
+  ["KRK-2","Kraken Micro X","Licence transferred","$1,020,000"],
+  ["ZNT-7","Zenith Neural Sigma","Data room opened","$880,000"],
+  ["MMK-8","Two-Sided Quoting Core","Escrow lodged","$780,000"],
+  ["LVT-4","Leviathan Macro Pro","Exclusive licence","$940,000"],
+  ["NBL-2","Nebula Mean-Rev","Licence transferred","$720,000"],
+  ["TTN-4","Titan Carry Engine","Escrow released","$690,000"],
+  ["PHX-9","Phoenix Vol Harvest","Data room opened","$610,000"],
+  ["PLS-3","Pulsar Stat-Arb v7","Licence transferred","$585,000"],
+  ["OVL-4","Overlay Sentinel","Reference cleared","$540,000"],
+  ["HLC-6","Helical Basket Neutral","Licence transferred","$495,000"],
+  ["SPC-3","Specter Curve Mk-II","Exclusive licence","$640,000"],
+  ["DGA-8","Venue-Agnostic Digital Core","Escrow lodged","$760,000"],
+  ["ATL-5","Atlas Quant Prime","Licence transferred","$470,000"]
+];
+const AGES=["NOW","00:14","00:47","02:05"];   /* position-based labels, not a running clock */
+const feedEl=$("feed"); let actI=0;
+function pushAct(){
+  const a=ACTS[actI++%ACTS.length];
+  const row=document.createElement("div"); row.className="arow";
+  row.innerHTML='<span class="dt"></span><span class="sy">'+a[0]+'</span>'+
+    '<span class="nm">'+a[1]+'</span><span class="ev">'+a[2]+'</span>'+
+    '<span class="am">'+a[3]+'</span><span class="ag"></span>';
+  feedEl.insertBefore(row,feedEl.firstChild);
+  while(feedEl.children.length>4) feedEl.removeChild(feedEl.lastChild);
+  [...feedEl.children].forEach((r,i)=>r.querySelector(".ag").textContent=AGES[i]||"");
+}
+for(let i=0;i<4;i++) pushAct();
+if(!REDUCED) setInterval(pushAct,2600);   /* moves rows only — no price or percentage is ever recomputed */
+
+/* ---------- spotlight walks across the visible cards ---------- */
+if(!REDUCED) setInterval(()=>{
+  const cards=[...grid.querySelectorAll(".lst.in")].filter(el=>{
+    const r=el.getBoundingClientRect(); return r.top>-40 && r.bottom<innerHeight+40; });
+  grid.querySelectorAll(".lst.spot").forEach(el=>el.classList.remove("spot"));
+  if(cards.length) cards[Math.floor(performance.now()/3400)%cards.length].classList.add("spot");
+},3400);
 
 /* ---------- gear ---------- */
 (function(){const btn=$("gearBtn"),menu=$("gearMenu");
