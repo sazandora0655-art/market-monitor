@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#06070b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
+<title>EVOLUTION CORE — SELF-LEARNING MONITOR</title>
+<style>
+  :root{
+    --bg:#06070b; --panel:#0b0d14; --panel2:#10131c; --line:#1c2030;
+    --txt:#cfd6e4; --dim:#5d6680; --accent:#ff5a9b; --gold:#f7c948;
+    --cyan:#5ad7ff; --green:#3ddc97; --red:#ff5566; --warn:#ffae5a;
+    --safe-top:env(safe-area-inset-top,0px);
+    --safe-bot:env(safe-area-inset-bottom,0px);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;background:var(--bg);color:var(--txt);
+    font-family:"Inter","Segoe UI","Hiragino Sans","Noto Sans JP",sans-serif;
+    font-size:12px;letter-spacing:.02em;-webkit-text-size-adjust:100%}
+  body{overflow:hidden}
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;
+    background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.6) 100%);z-index:9999}
+  body::after{content:"";position:fixed;inset:0;pointer-events:none;opacity:.04;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence baseFrequency='1.2' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");z-index:9998}
+
+  .m-app{display:flex;flex-direction:column;gap:6px;
+    padding:calc(6px + var(--safe-top)) 6px calc(6px + var(--safe-bot));
+    height:100vh;height:100dvh;max-width:460px;margin:0 auto;position:relative}
+  @media (min-width:900px){ .m-app{border-left:1px solid var(--line);border-right:1px solid var(--line)} }
+
+  .m-top{display:flex;align-items:center;gap:10px;padding:9px 13px;background:var(--panel);
+    border:1px solid var(--line);border-radius:4px;flex:0 0 auto}
+  .m-brand{font-weight:700;letter-spacing:.14em;color:var(--accent);font-size:13px;line-height:1.1}
+  .m-brand .sub{display:block;color:var(--dim);font-weight:400;font-size:8.5px;letter-spacing:.08em;margin-top:3px}
+  .m-live{margin-left:auto;display:flex;align-items:center;gap:6px;color:var(--dim);font-size:10px;white-space:nowrap}
+  .m-live .dot{width:7px;height:7px;border-radius:50%;background:var(--green);
+    box-shadow:0 0 8px var(--green);animation:hbpulse 2s ease-in-out infinite}
+  @keyframes hbpulse{0%,100%{opacity:1}50%{opacity:.55}}
+
+  .m-metrics{display:flex;gap:16px;overflow-x:auto;padding:7px 12px;background:var(--panel);
+    border:1px solid var(--line);border-radius:4px;font-size:10px;white-space:nowrap;flex:0 0 auto;
+    -webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .m-metrics::-webkit-scrollbar{display:none}
+  .hdr-item{display:flex;align-items:center;gap:6px;color:var(--dim);flex:0 0 auto}
+  .hdr-item b{color:var(--txt);font-weight:600;font-family:"JetBrains Mono","Consolas",monospace}
+
+  /* ===== HERO ===== */
+  .hero{flex:0 0 auto;position:relative;overflow:hidden;border-radius:4px;
+    border:1px solid var(--line);background:
+      radial-gradient(120% 140% at 50% 0%,rgba(247,201,72,.10),transparent 62%),
+      linear-gradient(180deg,var(--panel2),var(--panel));
+    padding:12px 14px 11px}
+  .hero.up{animation:heroPulse 1.1s ease-out}
+  @keyframes heroPulse{
+    0%{box-shadow:0 0 0 0 rgba(247,201,72,.55),inset 0 0 40px rgba(247,201,72,.30);border-color:var(--gold)}
+    100%{box-shadow:0 0 0 26px rgba(247,201,72,0),inset 0 0 0 rgba(247,201,72,0);border-color:var(--line)}
+  }
+  .hero-head{display:flex;align-items:baseline;gap:8px;font-size:9.5px;color:var(--dim);
+    letter-spacing:.16em;text-transform:uppercase}
+  .hero-head .cap{margin-left:auto;color:var(--dim);letter-spacing:.1em}
+  .hero-head .cap b{color:var(--gold);font-family:"JetBrains Mono",monospace}
+
+  .lvbox{display:flex;align-items:flex-end;gap:12px;margin-top:5px}
+  .lvnum{position:relative;font-family:"JetBrains Mono","Consolas",monospace;font-weight:700;
+    font-size:50px;line-height:.92;color:var(--gold);
+    text-shadow:0 0 26px rgba(247,201,72,.45);letter-spacing:-.02em;white-space:nowrap;flex:0 0 auto}
+  .lvnum .lv-pre{font-size:16px;color:var(--dim);text-shadow:none;margin-right:2px;letter-spacing:.1em}
+  .lvnum .lv-cap{font-size:14px;color:var(--dim);text-shadow:none;letter-spacing:.04em}
+  .lvnum.roll{animation:lvRoll .85s cubic-bezier(.2,1.5,.4,1)}
+  @keyframes lvRoll{
+    0%{transform:translateY(16px) scale(.82);opacity:0;filter:blur(5px)}
+    55%{transform:translateY(0) scale(1.14);opacity:1;filter:blur(0)}
+    100%{transform:translateY(0) scale(1)}
+  }
+  .lv-side{flex:1;min-width:0;padding-bottom:4px}
+  .lv-side .row{display:flex;justify-content:space-between;align-items:baseline;gap:8px;
+    font-size:9px;color:var(--dim);letter-spacing:.1em;white-space:nowrap}
+  .lv-side .row b{font-family:"JetBrains Mono",monospace;color:var(--cyan);font-weight:600;
+    font-size:10.5px;white-space:nowrap}
+  .lv-side .row b.xpv{color:var(--gold)}
+
+  /* バーはテキスト用の .xpv とは別クラス（同名にすると b 要素が潰れる） */
+  .xpbar{margin-top:5px;height:8px;background:#0a0c12;border:1px solid var(--line);
+    border-radius:2px;position:relative;overflow:hidden}
+  .xpbar .fill{position:absolute;inset:0 auto 0 0;width:0%;
+    background:linear-gradient(90deg,#6d5416,var(--gold));
+    box-shadow:0 0 10px rgba(247,201,72,.5);transition:width .5s linear}
+  .xpbar .fill::after{content:"";position:absolute;right:0;top:0;bottom:0;width:12px;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,.7))}
+  .xpbar .grid{position:absolute;inset:0;pointer-events:none;
+    background:repeating-linear-gradient(90deg,transparent 0 9px,rgba(0,0,0,.55) 9px 10px)}
+
+  .gain{position:absolute;right:14px;top:40px;font-family:"JetBrains Mono",monospace;font-size:11px;
+    color:var(--cyan);pointer-events:none;opacity:0}
+  .gain.go{animation:gainFly 1.3s ease-out}
+  @keyframes gainFly{0%{opacity:0;transform:translateY(6px)}18%{opacity:1}100%{opacity:0;transform:translateY(-26px)}}
+  .gain.big{color:var(--gold);font-weight:700}
+
+  .lvup{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);
+    text-align:center;pointer-events:none;opacity:0;z-index:5}
+  .lvup .txt{display:inline-block;font-weight:800;letter-spacing:.34em;font-size:22px;
+    color:#fff;text-shadow:0 0 22px var(--gold),0 0 46px rgba(247,201,72,.7);
+    padding:8px 16px 8px 22px;background:rgba(6,7,11,.55);border-top:1px solid var(--gold);
+    border-bottom:1px solid var(--gold)}
+  .lvup .sub{display:block;margin-top:6px;font-size:9.5px;letter-spacing:.2em;color:var(--gold);
+    text-shadow:none;font-weight:600}
+  .lvup.go{animation:lvupShow 2.6s ease-out}
+  @keyframes lvupShow{
+    0%{opacity:0;transform:translateY(-50%) scale(.86)}
+    10%{opacity:1;transform:translateY(-50%) scale(1.04)}
+    18%{transform:translateY(-50%) scale(1)}
+    82%{opacity:1}100%{opacity:0}
+  }
+  .ring{position:absolute;left:50%;top:50%;width:70px;height:70px;margin:-35px 0 0 -35px;
+    border:2px solid var(--gold);border-radius:50%;opacity:0;pointer-events:none;z-index:4}
+  .ring.go{animation:ringOut 1.3s ease-out}
+  @keyframes ringOut{0%{opacity:.9;transform:scale(.3)}100%{opacity:0;transform:scale(5.4)}}
+  #flash{position:fixed;inset:0;background:var(--gold);opacity:0;pointer-events:none;z-index:9997;mix-blend-mode:screen}
+  #flash.go{animation:flashOut .6s ease-out}
+  @keyframes flashOut{0%{opacity:.30}100%{opacity:0}}
+
+  /* ===== scroll area ===== */
+  .m-views{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;
+    -webkit-overflow-scrolling:touch;display:flex;flex-direction:column;gap:6px;padding-bottom:6px}
+
+  .counters{display:grid;grid-template-columns:1fr 1fr;gap:6px;flex:0 0 auto}
+  .ctr{background:var(--panel);border:1px solid var(--line);border-radius:4px;
+    padding:11px 13px;position:relative;overflow:hidden}
+  .ctr.big{grid-column:1 / -1}
+  .ctr .label{font-size:9px;color:var(--dim);letter-spacing:.16em;text-transform:uppercase}
+  .ctr .val{font-family:"JetBrains Mono","Consolas",monospace;font-size:20px;font-weight:700;
+    line-height:1.1;margin-top:5px;color:var(--gold)}
+  .ctr.big .val{font-size:35px;color:var(--accent);text-shadow:0 0 18px rgba(255,90,155,.35)}
+  .ctr .delta{font-size:10px;color:var(--green);margin-top:3px;font-family:"JetBrains Mono",monospace}
+  .ctr .spark{position:absolute;right:9px;bottom:7px;width:112px;height:28px;opacity:.75}
+  .ctr .val.bump{animation:bump .6s ease-out}
+  @keyframes bump{0%{transform:scale(1.08);color:#fff2c2;text-shadow:0 0 26px var(--gold)}100%{transform:scale(1)}}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:4px;
+    display:flex;flex-direction:column;min-height:0;position:relative;overflow:hidden;flex:0 0 auto}
+  .panel .ph{display:flex;justify-content:space-between;align-items:center;gap:8px;
+    padding:9px 13px;border-bottom:1px solid var(--line);font-size:10px;
+    color:var(--dim);letter-spacing:.16em;text-transform:uppercase}
+  .panel .ph .live{color:var(--green);font-weight:600;white-space:nowrap}
+  .panel .ph .live::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;
+    background:var(--green);margin-right:5px;box-shadow:0 0 6px var(--green);
+    animation:hbpulse 1.4s ease-in-out infinite}
+  .panel .ph .live.cy{color:var(--cyan)}
+  .panel .ph .live.cy::before{background:var(--cyan);box-shadow:0 0 6px var(--cyan)}
+  .panel .pc{flex:1;min-height:0;padding:10px 12px;position:relative}
+  .panel.h-chart{height:262px}
+  .panel.h-acc{height:146px}
+  .panel.h-log{height:250px}
+  #mainCv,#accCv{width:100%;height:100%;display:block}
+
+  .cv-note{position:absolute;left:13px;top:9px;font-family:"JetBrains Mono",monospace;
+    font-size:9px;color:var(--dim);letter-spacing:.08em;pointer-events:none}
+  .cv-note b{color:var(--gold);font-weight:600}
+  .cv-px{position:absolute;right:13px;top:8px;text-align:right;pointer-events:none;
+    font-family:"JetBrains Mono",monospace}
+  .cv-px .p{font-size:19px;font-weight:700;color:var(--gold);line-height:1.1}
+  .cv-px .p.dn{color:var(--red)}
+  .cv-px .c{font-size:9.5px;color:var(--green);margin-top:2px}
+  .cv-px .c.dn{color:var(--red)}
+
+  /* ===== NOW LEARNING ===== */
+  .lrow{padding:8px 0}
+  .lrow + .lrow{border-top:1px dashed rgba(255,255,255,.05)}
+  .lrow .lname{font-size:11.5px;color:var(--txt);line-height:1.4}
+  .lrow .lmeta{display:flex;justify-content:space-between;align-items:baseline;
+    font-size:9px;color:var(--dim);font-family:"JetBrains Mono",monospace;margin-top:4px}
+  .lrow .lmeta .pct{color:var(--cyan);font-weight:600}
+  .lbar{height:5px;background:#0a0c12;border-radius:2px;overflow:hidden;margin-top:4px;
+    border:1px solid rgba(255,255,255,.045)}
+  .lbar .lfill{height:100%;width:0%;background:linear-gradient(90deg,rgba(90,215,255,.35),var(--cyan));
+    transition:width .6s linear}
+  .lrow.done .lbar .lfill{background:linear-gradient(90deg,rgba(61,220,151,.4),var(--green))}
+  .lrow.done .lmeta .pct{color:var(--green)}
+  .lrow.flash{animation:lrFlash 1.1s ease-out}
+  @keyframes lrFlash{0%{background:rgba(61,220,151,.14)}100%{background:transparent}}
+
+  /* ===== log ===== */
+  .term{font-family:"JetBrains Mono","Consolas",monospace;font-size:10.5px;line-height:1.65;
+    height:100%;overflow:hidden;padding:6px 4px;color:var(--dim)}
+  .term .ln{animation:logIn .3s ease-out;padding:1px 0}
+  @keyframes logIn{from{opacity:0;transform:translateX(-4px)}to{opacity:1;transform:translateX(0)}}
+  .term .lv{display:inline-block;width:56px;text-align:center;border-radius:2px;
+    margin-right:7px;font-size:8.5px;padding:1px 0;letter-spacing:.06em;vertical-align:1px}
+  .term .learn{background:rgba(90,215,255,.12);color:var(--cyan)}
+  .term .done{background:rgba(61,220,151,.14);color:var(--green)}
+  .term .evolve{background:rgba(247,201,72,.16);color:var(--gold)}
+  .term .reject{background:rgba(255,85,102,.14);color:var(--red)}
+  .term .exec{background:rgba(255,90,155,.15);color:var(--accent)}
+  .term .info{background:rgba(180,180,200,.08);color:#8892a8}
+  .term .ln.big{color:var(--gold)}
+  .term .g{color:var(--green)}
+  .term .w{color:var(--txt)}
+
+  /* ticker — 左下のギアぶんだけ左に余白を確保する */
+  .ticker{background:var(--panel);border:1px solid var(--line);border-radius:4px;
+    overflow:hidden;position:relative;flex:0 0 auto;padding-left:48px}
+  .ticker::before,.ticker::after{content:"";position:absolute;top:0;bottom:0;z-index:2;pointer-events:none}
+  .ticker::before{left:0;width:66px;background:linear-gradient(to right,var(--panel) 62%,transparent)}
+  .ticker::after{right:0;width:40px;background:linear-gradient(to left,var(--panel),transparent)}
+  /* 画面が広いとアプリ列が中央に寄ってギアはティッカーに重ならない＝余白を戻す */
+  @media (min-width:560px){
+    .ticker{padding-left:0}
+    .ticker::before{width:40px;background:linear-gradient(to right,var(--panel),transparent)}
+  }
+  .ticker-track{display:flex;animation:scrollLeft 78s linear infinite;
+    font-family:"JetBrains Mono","Consolas",monospace;font-size:10.5px;
+    white-space:nowrap;padding:8px 0;will-change:transform}
+  @keyframes scrollLeft{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+  .ticker-item{margin:0 18px;display:inline-flex;align-items:center;gap:7px}
+  .ticker-item .sym{color:var(--dim);letter-spacing:.1em;font-size:9.5px}
+  .ticker-item .px{color:var(--txt);font-weight:600}
+  .ticker-item .chg{font-size:9.5px;font-weight:600}
+  .ticker-item .chg.up{color:var(--green)}
+  .ticker-item .chg.dn{color:var(--red)}
+
+  #hint{position:fixed;left:50%;bottom:54px;transform:translateX(-50%);z-index:10000;
+    max-width:96vw;overflow:hidden;text-overflow:ellipsis;
+    background:rgba(11,13,20,.94);border:1px solid var(--line);border-radius:4px;
+    padding:8px 13px;font-size:10px;color:var(--dim);letter-spacing:.06em;line-height:1.7;
+    white-space:nowrap;pointer-events:none;animation:hintOut 1s ease-in 8s forwards}
+  #hint b{color:var(--gold);font-family:"JetBrains Mono",monospace}
+  @keyframes hintOut{to{opacity:0;visibility:hidden}}
+
+  /* ===== 合言葉ゲート ===== */
+  #gate{position:fixed;inset:0;z-index:100000;background:radial-gradient(ellipse at center,#0b0d14,#06070b 80%);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;
+    padding:24px;text-align:center;transition:opacity .35s ease}
+  #gate.hide{opacity:0;pointer-events:none}
+  #gate .g-brand{font-weight:700;letter-spacing:.18em;color:var(--gold);font-size:15px}
+  #gate .g-sub{color:var(--dim);font-size:10px;letter-spacing:.14em;text-transform:uppercase;margin-top:-8px}
+  #gate .g-row{display:flex;gap:8px;width:100%;max-width:300px}
+  #gate input{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:4px;
+    color:var(--txt);font-size:15px;padding:12px 14px;font-family:monospace;letter-spacing:.1em;outline:none}
+  #gate input:focus{border-color:var(--gold)}
+  #gate button{background:var(--gold);border:none;border-radius:4px;color:#0b0d14;font-weight:700;
+    font-size:14px;padding:0 18px;cursor:pointer;letter-spacing:.06em}
+  #gate .g-err{color:var(--red);font-size:11px;height:14px;letter-spacing:.06em}
+  #gate .g-lock{font-size:22px;color:var(--gold);letter-spacing:.3em}
+
+  /* ===== テーマ切替ギア ===== */
+  /* E: EVOLUTION CORE — 左下・金の六角コア（休止時は控えめ／展開でコアが回る） */
+  .gear{position:fixed;left:10px;bottom:calc(10px + var(--safe-bot));z-index:90000;
+    width:40px;height:40px;display:flex;align-items:center;justify-content:center;cursor:pointer;
+    color:rgba(247,201,72,.7);font-size:15px;opacity:.6;
+    transition:opacity .25s,color .25s,filter .25s;-webkit-tap-highlight-color:transparent}
+  .gear .hexr{position:absolute;inset:0;
+    background:linear-gradient(180deg,rgba(247,201,72,.55),rgba(247,201,72,.20));
+    clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%)}
+  .gear .hexr::after{content:"";position:absolute;inset:1.5px;background:#0a0c12;
+    clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%)}
+  .gear span:not(.hexr){position:relative;z-index:1}
+  .gear:hover,.gear.on{opacity:1;color:var(--gold);filter:drop-shadow(0 0 9px rgba(247,201,72,.6))}
+  .gear:hover .hexr,.gear.on .hexr{background:conic-gradient(from 0deg,rgba(247,201,72,.14),var(--gold),rgba(247,201,72,.14))}
+  .gear.on .hexr{animation:hexSpin 3.4s linear infinite}
+  @keyframes hexSpin{to{transform:rotate(360deg)}}
+
+  .gmenu{position:fixed;left:10px;bottom:calc(58px + var(--safe-bot));z-index:90000;
+    background:var(--panel);border:1px solid var(--line);border-radius:4px;min-width:212px;
+    box-shadow:0 10px 30px rgba(0,0,0,.55);overflow:hidden;display:none}
+  .gmenu.open{display:block}
+  .gmenu .gm-h{padding:8px 12px;font-size:9px;letter-spacing:.16em;color:var(--dim);
+    text-transform:uppercase;border-bottom:1px solid var(--line)}
+  .gmenu .gm-i{padding:11px 12px;font-size:12px;cursor:pointer;display:flex;gap:8px;align-items:center;
+    border-bottom:1px solid var(--line);color:var(--txt)}
+  .gmenu .gm-i:last-child{border-bottom:none}
+  .gmenu .gm-i:hover{background:var(--panel2)}
+  .gmenu .gm-i .tag{font-size:9px;color:var(--dim);letter-spacing:.12em}
+  .gmenu .gm-i.active{color:var(--gold);font-weight:700}
+  .gmenu .gm-i .dot{width:7px;height:7px;border-radius:50%;background:var(--line)}
+  .gmenu .gm-i.active .dot{background:var(--gold);box-shadow:0 0 6px var(--gold)}
+
+  /* ===== カスタム設定パネル（TUNE） ===== */
+  .gmenu .gm-tune{border-top:1px solid var(--line);color:var(--gold)}
+  .gmenu .gm-tune .dot{background:var(--gold);box-shadow:0 0 6px var(--gold)}
+  .tune-ov{position:fixed;inset:0;z-index:95000;background:rgba(6,7,11,.78);backdrop-filter:blur(2px);
+    display:none;align-items:center;justify-content:center;padding:18px;overflow-y:auto}
+  .tune-ov.open{display:flex}
+  .tune-box{width:100%;max-width:352px;background:var(--panel2);border:1px solid var(--gold);border-radius:8px;
+    box-shadow:0 18px 50px rgba(0,0,0,.6),0 0 22px rgba(247,201,72,.18);padding:18px 18px 16px;margin:auto}
+  .tune-h{display:flex;align-items:center;font-weight:700;letter-spacing:.1em;color:var(--gold);font-size:13px;margin-bottom:15px}
+  .tune-h span{color:var(--dim);font-weight:400;font-size:10px;margin-left:6px;letter-spacing:.14em}
+  .tune-x{margin-left:auto;background:none;border:none;color:var(--dim);font-size:23px;line-height:1;cursor:pointer;padding:0 2px}
+  .tune-x:hover{color:var(--gold)}
+  .tune-row{margin-bottom:14px}
+  .tune-row > label{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--txt);
+    letter-spacing:.04em;margin-bottom:8px;gap:8px}
+  .tune-row > label b{color:var(--gold);font-size:13px;white-space:nowrap;font-family:"JetBrains Mono",monospace}
+  .tune-box input[type=range]{width:100%;accent-color:var(--gold);height:24px;cursor:pointer}
+  .tune-rate{font-size:10.5px;color:var(--dim);letter-spacing:.04em;margin-top:2px}
+  .tune-rate b{color:var(--cyan);font-family:"JetBrains Mono",monospace;font-weight:600}
+  .tune-seg{display:flex;gap:6px}
+  .tune-seg button{flex:1;background:var(--panel);border:1px solid var(--line);color:var(--dim);border-radius:4px;
+    padding:8px 0;font-size:11px;cursor:pointer;letter-spacing:.06em;font-family:inherit}
+  .tune-seg button.sel{border-color:var(--gold);color:var(--gold);background:rgba(247,201,72,.08)}
+  .tune-foot{display:flex;align-items:center;gap:12px;margin-top:14px;border-top:1px solid var(--line);padding-top:13px}
+  .tune-foot button{background:var(--panel);border:1px solid var(--line);color:var(--txt);border-radius:4px;
+    padding:7px 14px;font-size:11px;cursor:pointer;letter-spacing:.06em;white-space:nowrap;font-family:inherit}
+  .tune-foot button:hover{border-color:var(--gold);color:var(--gold)}
+  .tune-note{font-size:9px;color:var(--dim);letter-spacing:.03em;line-height:1.5}
+
+  @media (prefers-reduced-motion:reduce){
+    *{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+  }
+</style>
+</head>
+<body>
+
+<div id="gate">
+  <div class="g-lock">&#9670; &#9670; &#9670;</div>
+  <div class="g-brand">ALGO EXECUTION ENGINE</div>
+  <div class="g-sub">Restricted · Enter passphrase</div>
+  <div class="g-row">
+    <input id="gateInput" type="password" inputmode="text" autocomplete="off" autocapitalize="off"
+      autocorrect="off" spellcheck="false" placeholder="合言葉">
+    <button id="gateBtn" type="button">ENTER</button>
+  </div>
+  <div class="g-err" id="gateErr"></div>
+</div>
+
+<div id="flash"></div>
+
+<div class="gear" id="gearBtn" title="デザイン切替"><span class="hexr"></span><span>&#9881;</span></div>
+<div class="gmenu" id="gearMenu">
+  <div class="gm-h">DESIGN THEME</div>
+  <div class="gm-i" data-theme="a" data-href="index.html"><span class="dot"></span>A · NEON CYBER <span class="tag">dark</span></div>
+  <div class="gm-i" data-theme="b" data-href="b.html"><span class="dot"></span>B · FORCE GRAPH <span class="tag">violet</span></div>
+  <div class="gm-i" data-theme="c" data-href="c.html"><span class="dot"></span>C · PULSE ENGINE <span class="tag">amber</span></div>
+  <div class="gm-i" data-theme="d" data-href="d.html"><span class="dot"></span>D · ALPHA EXCHANGE <span class="tag">site</span></div>
+  <div class="gm-i active" data-theme="e" data-href="e.html"><span class="dot"></span>E · EVOLUTION CORE <span class="tag">gold</span></div>
+  <div class="gm-i gm-tune" id="eTuneOpen"><span class="dot"></span>カスタム設定 <span class="tag">TUNE</span></div>
+</div>
+
+<!-- カスタム設定（TUNE）パネル -->
+<div class="tune-ov" id="eTune">
+  <div class="tune-box">
+    <div class="tune-h">カスタム設定 <span>· EVOLUTION TUNE</span><button class="tune-x" id="eTuneX" title="閉じる" type="button">&times;</button></div>
+
+    <div class="tune-row">
+      <label>10分あたりの利益 <b id="eYenV">¥50,000</b></label>
+      <input type="range" id="eYen" min="10000" max="300000" step="5000" value="50000">
+      <div class="tune-rate">1時間で <b id="eYenHr">¥300,000</b> のペース</div>
+    </div>
+
+    <div class="tune-row">
+      <label>起動時の「本日の利益」 <b id="eTodayV">¥26,000</b></label>
+      <input type="range" id="eToday" min="0" max="500000" step="5000" value="26000">
+      <div class="tune-rate">実際の表示は ±15% ゆらして端数を出します</div>
+    </div>
+
+    <div class="tune-row">
+      <label>1レベルの分数 <b id="eMinV">45分</b></label>
+      <input type="range" id="eMin" min="5" max="120" step="5" value="45">
+      <div class="tune-rate">1時間で 約<b id="eLvHr">1.3</b>レベル · EXP上限 <b id="eXpMax">28,000</b></div>
+    </div>
+
+    <div class="tune-row">
+      <label>開始レベル <b id="eLvV">LV.11</b></label>
+      <input type="range" id="eLv" min="1" max="99" step="1" value="11">
+      <div class="tune-rate">成長余地 <b id="eCapV">89%</b> ／ 初期値 LV.11 は「まだ11%しか育っていない」希少性の演出。上げると台本と噛み合わなくなります</div>
+    </div>
+
+    <div class="tune-row">
+      <label>チャート速度 <b id="eChV">1.0×</b></label>
+      <input type="range" id="eCh" min="0.3" max="3" step="0.1" value="1">
+      <div class="tune-rate">値動きとローソク足の速さ（大きいほど速い）</div>
+    </div>
+
+    <div class="tune-row">
+      <label>銘柄ラベル</label>
+      <div class="tune-seg">
+        <button type="button" id="eLabAbs">抽象ラベル</button>
+        <button type="button" id="eLabReal">実名（録画用）</button>
+      </div>
+      <div class="tune-rate">公開用は抽象ラベル。実名は手元での録画用です</div>
+    </div>
+
+    <div class="tune-foot">
+      <button id="eTuneReset" type="button">リセット</button>
+      <span class="tune-note">設定はこのブラウザに保存されます（残高は表示しません）。</span>
+    </div>
+  </div>
+</div>
+
+<div class="m-app">
+
+  <div class="m-top">
+    <div class="m-brand">ALGO EXECUTION ENGINE
+      <span class="sub">EVOLUTION CORE · SELF-LEARNING</span></div>
+    <div class="m-live"><span class="dot"></span>GEN&nbsp;<b id="hGen" style="color:var(--txt)">G-11</b></div>
+  </div>
+
+  <div class="m-metrics">
+    <div class="hdr-item">学習済み約定 <b id="hLearn">1,284,392</b></div>
+    <div class="hdr-item">検証済み仮説 <b id="hPat">3,148</b></div>
+    <div class="hdr-item">判断精度 <b id="hAcc">87.4%</b></div>
+    <div class="hdr-item">TICK&rarr;EXEC <b id="hExec">18ms</b></div>
+    <div class="hdr-item">NPU <b id="hNpu">12.4%</b></div>
+    <div class="hdr-item">RTT <b id="hLat">47ms</b></div>
+    <div class="hdr-item">NODE <b>COLO-03</b></div>
+  </div>
+
+  <!-- ===== HERO ===== -->
+  <div class="hero" id="hero">
+    <div class="hero-head">
+      <span>ENGINE LEVEL</span>
+      <span class="cap">成長余地 <b id="capTxt">89%</b></span>
+    </div>
+
+    <div class="lvbox">
+      <div class="lvnum" id="lvNum"><span class="lv-pre">LV.</span><span id="lvVal">11</span><span class="lv-cap"> / 100</span></div>
+      <div class="lv-side">
+        <div class="row"><span>EXP</span><b class="xpv" id="xpTxt">0 / 32,000</b></div>
+        <div class="xpbar"><div class="fill" id="xpFill"></div><div class="grid"></div></div>
+        <div class="row" style="margin-top:5px"><span>NEXT LV まで</span><b id="xpLeft">32,000 XP</b></div>
+      </div>
+    </div>
+
+    <div class="gain" id="gain">+0 XP</div>
+    <div class="ring" id="ring"></div>
+    <div class="lvup" id="lvup">
+      <span class="txt">LEVEL UP<span class="sub" id="lvupSub">LV.11 → LV.12</span></span>
+    </div>
+  </div>
+
+  <div class="m-views">
+
+    <div class="counters">
+      <div class="ctr big">
+        <div class="label">本日の利益 · TODAY P/L</div>
+        <div class="val" id="todayPL">¥+0</div>
+        <div class="delta" id="todayDelta">+¥0 · 直近の決済</div>
+        <canvas class="spark" id="sparkCum" width="224" height="56"></canvas>
+      </div>
+      <div class="ctr">
+        <div class="label">1取引あたり</div>
+        <div class="val" id="perTrade" style="color:var(--cyan);font-size:18px">¥+0</div>
+        <div class="delta" id="tradeCnt">0 trades</div>
+      </div>
+      <div class="ctr">
+        <div class="label">勝率 · WIN RATE</div>
+        <div class="val" id="winrate" style="color:var(--green);font-size:18px">0.0%</div>
+        <div class="delta" id="posInfo">保有 0</div>
+      </div>
+    </div>
+
+    <!-- 動いているチャート -->
+    <div class="panel h-chart">
+      <div class="ph"><span>LIVE MARKET</span><span class="live">STREAMING</span></div>
+      <div class="pc" style="padding:0">
+        <canvas id="mainCv"></canvas>
+        <div class="cv-note"><span id="cvSym">PRIMARY</span> · 1M　<b id="cvState">監視中</b></div>
+        <div class="cv-px"><div class="p" id="cvPx">--</div><div class="c" id="cvChg">--</div></div>
+      </div>
+    </div>
+
+    <!-- 何を学習しているか -->
+    <div class="panel">
+      <div class="ph"><span>NOW LEARNING · 学習中</span><span class="live cy" id="lrCount">3 TASKS</span></div>
+      <div class="pc" id="learnBox" style="padding:4px 13px 9px"></div>
+    </div>
+
+    <div class="panel h-acc">
+      <div class="ph"><span>ACCURACY CURVE</span><span class="live">30D</span></div>
+      <div class="pc" style="padding:0">
+        <canvas id="accCv"></canvas>
+        <div class="cv-note">判断精度の推移　<b id="accNote">87.4%</b></div>
+      </div>
+    </div>
+
+    <div class="panel h-log">
+      <div class="ph"><span>EVOLUTION LOG</span><span class="live">STREAM</span></div>
+      <div class="pc" style="padding:0"><div class="term" id="termLog"></div></div>
+    </div>
+
+  </div>
+
+  <div class="ticker"><div class="ticker-track" id="tickerTrack"></div></div>
+</div>
+
+<div id="hint">録画用　<b>L</b> レベルアップ　<b>K</b> 学習完了　<b>1</b>/<b>2</b>/<b>3</b> 速度　<b>H</b> ヒントを消す</div>
+
+<script>
+"use strict";
+const $  = id => document.getElementById(id);
+const rnd  = (a,b) => a + Math.random()*(b-a);
+const rndi = (a,b) => Math.floor(rnd(a,b+1));
+const pick = a => a[Math.floor(Math.random()*a.length)];
+const yen  = v => (v<0?"-":"+") + "¥" + Math.abs(Math.round(v)).toLocaleString();
+const num  = v => Math.round(v).toLocaleString();
+
+/* =========================================================
+   ★ カスタム設定（TUNE）— localStorage aee_e_cfg
+   ここの5項目がギアメニュー「カスタム設定 TUNE」のスライダーになる
+   ========================================================= */
+const DEF = { yen10:50000, startYen:26000, minLv:45, startLv:11, chartSpeed:1, labels:"abs" };
+let TCFG;
+try{ TCFG = Object.assign({}, DEF, JSON.parse(localStorage.getItem("aee_e_cfg")||"{}")); }
+catch(e){ TCFG = Object.assign({}, DEF); }
+function saveCfg(){ try{ localStorage.setItem("aee_e_cfg", JSON.stringify(TCFG)); }catch(e){} }
+
+/* =========================================================
+   ★ 設定ブロック — TUNEで動かさない固定値はここ
+   ========================================================= */
+const CFG = {
+  levelCap    : 100,       // レベル上限
+
+  tradeSec    : [7, 15],   // 決済の間隔（秒）
+  entrySec    : [9, 18],   // エントリーの間隔（秒）
+  taskMinutes : [5, 10],   // 学習テーマ1つにかかる時間（分）
+
+  chartTickMs   : 300,     // チャートの値動きの間隔（TUNEのチャート速度で割る）
+  chartCandleSec: 14,      // ローソク1本ができる秒数
+  chartVol      : 0.00008  // 1tickの値動きの大きさ（小さいほど穏やか）
+};
+
+/* --- 上の設定から自動で算出（基本さわらない） --- */
+const MICRO_MS   = 2400;                 // 細かい学習ログの間隔
+const LEARN_TICK = 600;                  // 学習タスクの進捗更新の間隔
+const WIN_RATE   = 0.72;
+const WIN_MULT   = [0.5, 2.6];
+const LOSS_MULT  = [0.22, 0.85];
+const XP_TRADE   = [16, 52];
+const XP_MICRO   = [3, 11];
+const XP_TASK_OK = [520, 1180];
+const XP_TASK_NG = [120, 260];
+
+const avg = a => (a[0] + a[1]) / 2;
+const AVG_TRADE_MS   = avg(CFG.tradeSec) * 1000;
+const TRADES_PER_MIN = 60000 / AVG_TRADE_MS;
+// 1取引の期待値の倍率（勝率72%・勝ち倍率・負け倍率から決まる）
+const EV_MULT = WIN_RATE * avg(WIN_MULT) - (1 - WIN_RATE) * avg(LOSS_MULT);
+// 1分あたりに入る経験値（決済＋細かい学習ログ＋学習テーマ完了の合計）
+const XP_PER_MIN =
+    TRADES_PER_MIN * avg(XP_TRADE)
+  + (60000 / MICRO_MS) * avg(XP_MICRO)
+  + (3 / avg(CFG.taskMinutes)) * (WIN_RATE * avg(XP_TASK_OK) + (1 - WIN_RATE) * avg(XP_TASK_NG));
+const LV_CAP = CFG.levelCap;
+
+// TUNEで変わる2つ。10分で yen10 円 / minLv 分で1レベル になるよう逆算する
+let TRADE_BASE = 0, XP_MAX = 0;
+function recalc(keepPct){
+  const pct = XP_MAX ? S.xp / XP_MAX : 0;
+  TRADE_BASE = TCFG.yen10 / (TRADES_PER_MIN * 10) / EV_MULT;
+  XP_MAX = Math.max(500, Math.round(XP_PER_MIN * TCFG.minLv / 500) * 500);
+  // バーの位置（％）は保ったまま、ペースだけ変える
+  if(keepPct) S.xp = Math.min(XP_MAX - 1, Math.round(pct * XP_MAX));
+}
+
+const S = {
+  level: TCFG.startLv, xp: 0,
+  today: 0, trades: 0, wins: 0, open: 0,
+  learn: 1284392, hypo: 3148, acc: 87.4,
+  lat: 47, exec: 18, npu: 12.4,
+  speed: 1, hist: [], accHist: []
+};
+recalc(false);
+
+/* ================= 銘柄ラベル =================
+   公開ルール（固有名NG）に合わせて既定は抽象ラベル。
+   TUNEで「実名（録画用）」に切り替えられる。 */
+const SYMS = {
+  abs: {
+    note  : "PRIMARY",
+    pairs : ["PRIMARY","PAIR-02","PAIR-05","METAL-A","CROSS-3","MINOR-7"],
+    ticker: [
+      {s:"PRIMARY", b:152.48,  d:3}, {s:"PAIR-02",  b:1.0842,  d:5},
+      {s:"PAIR-05", b:195.21,  d:3}, {s:"METAL-A",  b:2384.12, d:2},
+      {s:"MINOR-7", b:0.6614,  d:5}, {s:"CROSS-3",  b:165.32,  d:3},
+      {s:"IDX-01",  b:38274,   d:0}, {s:"IDX-04",   b:5294.32, d:2},
+      {s:"BASKET-9",b:104.21,  d:3}, {s:"RATE-10Y", b:4.214,   d:3},
+      {s:"VOL-IDX", b:14.82,   d:2}, {s:"ENERGY-2", b:78.34,   d:2}
+    ]
+  },
+  real: {
+    note  : "USD/JPY",
+    pairs : ["USD/JPY","EUR/USD","GBP/JPY","XAU/USD","EUR/JPY","AUD/USD"],
+    ticker: [
+      {s:"USD/JPY", b:152.48,  d:3}, {s:"EUR/USD", b:1.0842,  d:5},
+      {s:"GBP/JPY", b:195.21,  d:3}, {s:"XAU/USD", b:2384.12, d:2},
+      {s:"AUD/USD", b:0.6614,  d:5}, {s:"EUR/JPY", b:165.32,  d:3},
+      {s:"NIKKEI",  b:38274,   d:0}, {s:"S&P 500", b:5294.32, d:2},
+      {s:"DXY",     b:104.21,  d:3}, {s:"US10Y",   b:4.214,   d:3},
+      {s:"VIX",     b:14.82,   d:2}, {s:"WTI",     b:78.34,   d:2}
+    ]
+  }
+};
+const symSet = () => SYMS[TCFG.labels === "real" ? "real" : "abs"];
+
+const TARGET_ACC = 87.4;
+(function seedAcc(){
+  const raw = []; let a = 0;
+  for(let i=0;i<30;i++){ a += rnd(-0.16,0.42); raw.push(a); }
+  const off = TARGET_ACC - raw[raw.length-1];
+  raw.forEach(v => S.accHist.push(v + off));
+  S.acc = S.accHist[S.accHist.length-1];
+})();
+function seedToday(base){
+  S.hist = [];
+  S.today = base * rnd(0.85, 1.15);
+  let acc = 0;
+  for(let i=0;i<70;i++){ acc += S.today/70 * rnd(0.15,1.85); S.hist.push(acc); }
+  S.hist[S.hist.length-1] = S.today;
+}
+(function bootToday(){
+  S.trades = rndi(14, 22);
+  S.wins   = Math.round(S.trades * rnd(0.68, 0.76));
+  S.open   = rndi(1, 3);
+  seedToday(TCFG.startYen);
+})();
+
+/* ================= 学習テーマ ================= */
+const TOPICS = [
+  ["アジア時間・仲値前後の値動きの偏り",        "時間帯"],
+  ["欧州時間の初動のブレイクの真偽判定",        "ブレイク"],
+  ["米国時間の押し目形成パターン",              "トレンド"],
+  ["経済指標の直後30分・ボラティリティの収束",  "イベント"],
+  ["損切り直後の再エントリーの最適タイミング",  "執行"],
+  ["週明けギャップが埋まる確率と所要時間",      "ギャップ"],
+  ["要人発言の語調スコアと値幅の相関",          "自然言語"],
+  ["レンジ上限での反転シグナルの信頼度",        "レンジ"],
+  ["スプレッド拡大時の執行見送りの閾値",        "コスト"],
+  ["相関ペア間の遅行反応の検出",                "相関"],
+  ["月末フローによる方向の偏り",                "需給"],
+  ["高ボラ局面でのロット縮小の判断基準",        "リスク"],
+  ["連敗直後の判断バイアスの除去",              "メタ"],
+  ["利確後に伸び続ける値動きの取り逃がし",      "改善"],
+  ["ダマシのヒゲを本体と区別する条件",          "ノイズ"],
+  ["流動性が薄い時間帯のスリッページ予測",      "執行"],
+  ["日足レベルの節目に対する反応の強さ",        "節目"],
+  ["金利差の変化が為替に伝わるまでの遅れ",      "マクロ"]
+];
+let topicIdx = rndi(0, TOPICS.length-1);
+function nextTopic(){ topicIdx = (topicIdx + rndi(1,4)) % TOPICS.length; return TOPICS[topicIdx]; }
+
+/* ================= log ================= */
+const LOGBOX = $("termLog");
+function logLine(kind, html, big){
+  const d = document.createElement("div");
+  d.className = "ln" + (big ? " big" : "");
+  d.innerHTML = '<span class="lv ' + kind + '">' + kind.toUpperCase() + "</span>" + html;
+  LOGBOX.appendChild(d);
+  while(LOGBOX.childNodes.length > 44) LOGBOX.removeChild(LOGBOX.firstChild);
+  LOGBOX.scrollTop = LOGBOX.scrollHeight;
+}
+
+/* ================= 学習タスク ================= */
+const TASKS = [];
+const LBOX = $("learnBox");
+
+function makeTask(){
+  const [name, tag] = nextTopic();
+  const need = rndi(9, 26) * 1000;
+  return {
+    name, tag, need, got: rndi(200, 1400),
+    // 1tickあたりの進捗（0.6秒ごと）。1テーマの学習に約5〜10分かかる
+    rate: 1 / (rnd(CFG.taskMinutes[0], CFG.taskMinutes[1]) * 60000 / LEARN_TICK * 1.05),
+    el: null, fill: null, pct: null, meta: null, done: false
+  };
+}
+function renderTasks(){
+  LBOX.innerHTML = "";
+  TASKS.forEach(t => {
+    const row = document.createElement("div");
+    row.className = "lrow";
+    row.innerHTML =
+      '<div class="lname">' + t.name + '</div>' +
+      '<div class="lmeta"><span>[' + t.tag + '] サンプル <span class="s">0</span> / ' + num(t.need) + '</span>' +
+      '<span class="pct">0.0%</span></div>' +
+      '<div class="lbar"><div class="lfill"></div></div>';
+    LBOX.appendChild(row);
+    t.el = row; t.fill = row.querySelector(".lfill");
+    t.pct = row.querySelector(".pct"); t.meta = row.querySelector(".s");
+  });
+}
+function paintTask(t){
+  const p = Math.min(1, t.got / t.need);
+  t.fill.style.width = (p*100) + "%";
+  t.pct.textContent = (p*100).toFixed(1) + "%";
+  t.meta.textContent = num(t.got);
+}
+function completeTask(i){
+  const t = TASKS[i];
+  if(t.done) return;
+  t.done = true;
+  t.got = t.need;
+  paintTask(t);
+  t.el.classList.add("done");
+  t.el.classList.remove("flash"); void t.el.offsetWidth; t.el.classList.add("flash");
+
+  const adopted = Math.random() < 0.72;
+  S.hypo++;
+  if(adopted){
+    const gainAcc = rnd(0.01, 0.06);
+    S.acc = Math.min(96.8, S.acc + gainAcc);
+    S.accHist[S.accHist.length-1] = S.acc;
+    logLine("done",
+      '学習完了 <span class="w">' + t.name + '</span> · サンプル ' + num(t.need)
+      + ' 件 · 判断精度 <span class="g">+' + gainAcc.toFixed(2) + '%</span> → <span class="g">採用</span>');
+    addXP(rndi(XP_TASK_OK[0], XP_TASK_OK[1]), true);
+  } else {
+    logLine("reject",
+      '検証完了 <span class="w">' + t.name + '</span> · 有意差なし（一致率 '
+      + rnd(48,58).toFixed(1) + '%）→ 棄却・条件を変えて再学習');
+    addXP(rndi(XP_TASK_NG[0], XP_TASK_NG[1]), true);
+  }
+  paintHdr(); drawAcc();
+
+  setTimeout(() => {
+    TASKS[i] = makeTask();
+    renderTasks(); TASKS.forEach(paintTask);
+    logLine("learn", '学習開始 <span class="w">' + TASKS[i].name + '</span> · 目標サンプル ' + num(TASKS[i].need) + ' 件');
+  }, 2600 / S.speed);
+}
+for(let i=0;i<3;i++) TASKS.push(makeTask());
+renderTasks(); TASKS.forEach(paintTask);
+
+setInterval(() => {
+  TASKS.forEach((t, i) => {
+    if(t.done) return;
+    t.got += t.need * t.rate * S.speed * rnd(0.6, 1.5);
+    if(t.got >= t.need) completeTask(i); else paintTask(t);
+  });
+  $("lrCount").textContent = TASKS.filter(t => !t.done).length + " TASKS";
+}, LEARN_TICK);
+
+/* 学習の細かい進捗ログ */
+const MICRO = [
+  () => '特徴量を再計算 · dim=512 · 収束 ' + rndi(3,48) + 'ms',
+  () => '類似局面を照合 · ' + num(rndi(400,9800)) + ' 件 → 重みを更新',
+  () => 'スリッページ実測を執行モデルへ反映 · ' + rndi(4,31) + 'ms 改善',
+  () => 'ボラティリティ推定を更新 · σ ' + rnd(0.4,1.9).toFixed(2) + ' → ' + rnd(0.4,1.9).toFixed(2),
+  () => '決済結果を学習キューへ投入 · 勾配ノルム 0.0' + rndi(10,99),
+  () => '過剰適合を検出 · 直近' + rndi(3,9) + '日ぶんの重みを減衰',
+  () => '相関マップを再構築 · ' + num(rndi(600,9200)) + ' ノード再接続',
+  () => '局面クラスタ #' + rndi(100,999) + ' を再学習 · サンプル +' + num(rndi(120,3400))
+];
+// 細かい学習は経験値も少しずつ積む（ポップアップは出さず、数字だけが常に動く）
+setInterval(() => { logLine("learn", pick(MICRO)()); addXP(rndi(XP_MICRO[0], XP_MICRO[1]), false, true); }, MICRO_MS);
+
+/* ================= XP / LEVEL ================= */
+function paintXP(){
+  const p = Math.max(0, Math.min(100, S.xp / XP_MAX * 100));
+  $("xpFill").style.width = p + "%";
+  $("xpTxt").textContent  = num(S.xp) + " / " + num(XP_MAX);
+  $("xpLeft").textContent = num(Math.max(0, XP_MAX - S.xp)) + " XP";
+  $("capTxt").textContent = (LV_CAP - S.level) + "%";
+  $("lvVal").textContent  = S.level;
+}
+function addXP(n, big, silent){
+  S.xp += n;
+  if(!silent){
+    const g = $("gain");
+    g.textContent = "+" + num(n) + " XP";
+    g.classList.toggle("big", !!big);
+    g.classList.remove("go"); void g.offsetWidth; g.classList.add("go");
+  }
+  if(S.xp >= XP_MAX){ levelUp(); return; }
+  paintXP();
+}
+function levelUp(){
+  const from = S.level;
+  S.level = Math.min(LV_CAP, S.level + 1);
+  S.xp = 0;
+  S.acc = Math.min(96.8, S.acc + rnd(0.15, 0.35));
+  S.accHist.push(S.acc); if(S.accHist.length > 30) S.accHist.shift();
+
+  $("flash").classList.remove("go"); void $("flash").offsetWidth; $("flash").classList.add("go");
+  $("hero").classList.remove("up");  void $("hero").offsetWidth;  $("hero").classList.add("up");
+  $("ring").classList.remove("go");  void $("ring").offsetWidth;  $("ring").classList.add("go");
+  $("lvupSub").textContent = "LV." + from + " → LV." + S.level;
+  $("lvup").classList.remove("go");  void $("lvup").offsetWidth;  $("lvup").classList.add("go");
+  $("lvVal").textContent = S.level;
+  const n = $("lvNum");
+  n.classList.remove("roll"); void n.offsetWidth; n.classList.add("roll");
+
+  logLine("evolve", 'LEVEL ' + from + ' → ' + S.level + ' · 判断精度 ' + S.acc.toFixed(1)
+    + '% · 検証済み仮説 ' + num(S.hypo) + ' 件', true);
+  logLine("evolve", '新しい学習領域を解放 · <span class="w">' + nextTopic()[0] + '</span> の解析を開始');
+  paintXP(); paintHdr(); drawAcc();
+}
+
+/* ================= counters ================= */
+function paintHdr(){
+  $("hLearn").textContent = num(S.learn);
+  $("hPat").textContent   = num(S.hypo);
+  $("hAcc").textContent   = S.acc.toFixed(1) + "%";
+  $("accNote").textContent = S.acc.toFixed(1) + "%";
+  $("hGen").textContent   = "G-" + S.level;
+}
+function paintCounters(){
+  $("todayPL").textContent  = yen(S.today);
+  $("perTrade").textContent = S.trades ? yen(S.today / S.trades) : "¥+0";
+  $("tradeCnt").textContent = S.trades + " trades";
+  $("winrate").textContent  = (S.trades ? S.wins/S.trades*100 : 0).toFixed(1) + "%";
+  $("posInfo").textContent  = "保有 " + S.open;
+}
+setInterval(() => {
+  S.lat  = Math.max(28, Math.min(82, S.lat  + rnd(-3,3)));
+  S.exec = Math.max(8,  Math.min(38, S.exec + rnd(-2,2)));
+  S.npu  = Math.max(5,  Math.min(26, S.npu  + rnd(-1.1,1.1)));
+  $("hLat").textContent  = Math.round(S.lat) + "ms";
+  $("hExec").textContent = Math.round(S.exec) + "ms";
+  $("hNpu").textContent  = S.npu.toFixed(1) + "%";
+}, 1500);
+setInterval(() => { S.learn += rndi(3, 19); $("hLearn").textContent = num(S.learn); }, 300);
+
+/* ================= LIVE CHART ================= */
+const MK = {
+  px: 152.480, dec: 3, open: 152.480,
+  candles: [], cur: null, lastT: 0, sec: CFG.chartCandleSec,
+  marks: []   // {i, side:"buy"|"sell", price}
+};
+(function seedCandles(){
+  let p = 152.30;
+  for(let i=0;i<44;i++){
+    const o = p;
+    let h=o, l=o, c=o;
+    for(let k=0;k<10;k++){ c = c * (1 + rnd(-0.00035,0.00037)); h=Math.max(h,c); l=Math.min(l,c); }
+    MK.candles.push({o,h,l,c});
+    p = c;
+  }
+  MK.px = p; MK.open = MK.candles[0].o;
+  MK.cur = {o:p,h:p,l:p,c:p};
+})();
+
+function mkTick(){
+  const z = (Math.random()+Math.random()+Math.random()-1.5)/0.87;
+  MK.px = +(MK.px * (1 + CFG.chartVol*z + CFG.chartVol*0.012)).toFixed(MK.dec);
+  const c = MK.cur;
+  c.c = MK.px; c.h = Math.max(c.h, MK.px); c.l = Math.min(c.l, MK.px);
+  const now = performance.now();
+  if(now - MK.lastT > MK.sec*1000/(S.speed*TCFG.chartSpeed)){
+    MK.candles.push({...c});
+    if(MK.candles.length > 44) { MK.candles.shift(); MK.marks.forEach(m => m.i--); }
+    MK.marks = MK.marks.filter(m => m.i >= 0);
+    MK.cur = {o:MK.px,h:MK.px,l:MK.px,c:MK.px};
+    MK.lastT = now;
+  }
+  const chg = (MK.px - MK.open) / MK.open * 100;
+  $("cvPx").textContent = MK.px.toFixed(MK.dec);
+  $("cvPx").classList.toggle("dn", chg < 0);
+  $("cvChg").textContent = (chg>=0?"+":"") + chg.toFixed(3) + "%";
+  $("cvChg").classList.toggle("dn", chg < 0);
+  drawChart();
+}
+let chartTimer = null;
+function applyChartSpeed(){
+  clearInterval(chartTimer);
+  chartTimer = setInterval(mkTick, Math.max(60, Math.round(CFG.chartTickMs / TCFG.chartSpeed)));
+}
+
+function fit(cv){
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const r = cv.getBoundingClientRect();
+  cv.width = Math.max(1, r.width*dpr); cv.height = Math.max(1, r.height*dpr);
+  const c = cv.getContext("2d"); c.setTransform(dpr,0,0,dpr,0,0);
+  return { ctx:c, w:r.width, h:r.height };
+}
+
+function drawChart(){
+  const { ctx, w, h } = fit($("mainCv"));
+  ctx.clearRect(0,0,w,h);
+  const pad = { l:8, r:56, t:50, b:12 };   // t は右上の現在値表示と軸ラベルが重ならない高さ
+  const iw = w-pad.l-pad.r, ih = h-pad.t-pad.b;
+  const all = MK.candles.concat([MK.cur]);
+  let mn = Infinity, mx = -Infinity;
+  all.forEach(c => { mn = Math.min(mn, c.l); mx = Math.max(mx, c.h); });
+  const padv = (mx-mn)*0.16 || 0.02; mn -= padv; mx += padv;
+  const Y = v => pad.t + ih - ((v-mn)/(mx-mn))*ih;
+  const bw = iw / all.length;
+
+  ctx.strokeStyle = "rgba(255,255,255,.04)"; ctx.lineWidth = 1;
+  for(let i=0;i<=4;i++){
+    const y = pad.t + ih*i/4;
+    ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(w-pad.r,y); ctx.stroke();
+    ctx.fillStyle = "rgba(93,102,128,.75)";
+    ctx.font = '8.5px "JetBrains Mono",monospace'; ctx.textAlign = "left";
+    ctx.fillText((mx - (mx-mn)*i/4).toFixed(MK.dec), w-pad.r+6, y+3);
+  }
+
+  all.forEach((c,i) => {
+    const x = pad.l + i*bw + bw*0.5;
+    const up = c.c >= c.o;
+    const col = up ? "rgba(61,220,151,.9)" : "rgba(255,85,102,.9)";
+    ctx.strokeStyle = col; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x, Y(c.h)); ctx.lineTo(x, Y(c.l)); ctx.stroke();
+    const yo = Y(c.o), yc = Y(c.c);
+    const top = Math.min(yo,yc), hgt = Math.max(1.2, Math.abs(yc-yo));
+    ctx.fillStyle = col; ctx.fillRect(x - bw*0.30, top, bw*0.60, hgt);
+  });
+
+  // 現在値ライン
+  const yNow = Y(MK.px);
+  ctx.setLineDash([4,3]); ctx.strokeStyle = "rgba(247,201,72,.6)"; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(pad.l, yNow); ctx.lineTo(w-pad.r, yNow); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = "rgba(247,201,72,.92)";
+  ctx.fillRect(w-pad.r+2, yNow-7, pad.r-4, 14);
+  ctx.fillStyle = "#0b0d14"; ctx.font = '600 9px "JetBrains Mono",monospace'; ctx.textAlign = "center";
+  ctx.fillText(MK.px.toFixed(MK.dec), w-pad.r+2 + (pad.r-4)/2, yNow+3);
+
+  // エントリー＝三角（上向き=買い / 下向き=売り）、決済＝ひし形
+  MK.marks.forEach(m => {
+    const x = pad.l + m.i*bw + bw*0.5, y = Y(m.price);
+    ctx.beginPath();
+    if(m.type === "exit"){
+      const s = 4.6;
+      ctx.moveTo(x, y-s); ctx.lineTo(x+s, y); ctx.lineTo(x, y+s); ctx.lineTo(x-s, y);
+      ctx.closePath();
+      ctx.fillStyle = m.win ? "#f7c948" : "#5d6680";
+    } else if(m.side === "buy"){
+      ctx.moveTo(x, y+9); ctx.lineTo(x-4.5, y+16); ctx.lineTo(x+4.5, y+16);
+      ctx.closePath(); ctx.fillStyle = "#5ad7ff";
+    } else {
+      ctx.moveTo(x, y-9); ctx.lineTo(x-4.5, y-16); ctx.lineTo(x+4.5, y-16);
+      ctx.closePath(); ctx.fillStyle = "#ff5a9b";
+    }
+    ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 8; ctx.fill(); ctx.shadowBlur = 0;
+  });
+}
+
+function drawAcc(){
+  const { ctx, w, h } = fit($("accCv"));
+  ctx.clearRect(0,0,w,h);
+  const pad = { l:10, r:10, t:26, b:12 };
+  const iw = w-pad.l-pad.r, ih = h-pad.t-pad.b;
+  const d = S.accHist, mn = Math.min(...d)-0.5, mx = Math.max(...d)+0.5;
+  const X = i => pad.l + iw*i/(d.length-1);
+  const Y = v => pad.t + ih - ((v-mn)/(mx-mn))*ih;
+  const g = ctx.createLinearGradient(0,pad.t,0,pad.t+ih);
+  g.addColorStop(0,"rgba(61,220,151,.30)"); g.addColorStop(1,"rgba(61,220,151,0)");
+  ctx.beginPath(); ctx.moveTo(X(0), pad.t+ih);
+  d.forEach((v,i) => ctx.lineTo(X(i), Y(v)));
+  ctx.lineTo(X(d.length-1), pad.t+ih); ctx.closePath(); ctx.fillStyle = g; ctx.fill();
+  ctx.beginPath(); ctx.strokeStyle = "#3ddc97"; ctx.lineWidth = 1.6;
+  d.forEach((v,i) => i ? ctx.lineTo(X(i),Y(v)) : ctx.moveTo(X(i),Y(v)));
+  ctx.stroke();
+  ctx.beginPath(); ctx.arc(X(d.length-1), Y(d[d.length-1]), 3.2, 0, Math.PI*2);
+  ctx.fillStyle = "#3ddc97"; ctx.shadowColor = "#3ddc97"; ctx.shadowBlur = 12; ctx.fill(); ctx.shadowBlur = 0;
+}
+
+function drawSpark(){
+  const cv = $("sparkCum"), ctx = cv.getContext("2d");
+  ctx.clearRect(0,0,cv.width,cv.height);
+  const d = S.hist; if(d.length < 2) return;
+  const mn = Math.min(...d), mx = Math.max(...d), rg = (mx-mn)||1;
+  ctx.beginPath();
+  d.forEach((v,i) => {
+    const x = cv.width*i/(d.length-1), y = cv.height - ((v-mn)/rg)*(cv.height-8) - 4;
+    i ? ctx.lineTo(x,y) : ctx.moveTo(x,y);
+  });
+  ctx.strokeStyle = "rgba(255,90,155,.85)"; ctx.lineWidth = 2; ctx.stroke();
+}
+
+/* ================= trading ================= */
+function openTrade(){
+  S.open++;
+  const side = Math.random() < 0.5 ? "buy" : "sell";
+  MK.marks.push({ i: MK.candles.length, type:"entry", side, price: MK.px });
+  if(MK.marks.length > 10) MK.marks.shift();
+  $("cvState").textContent = "エントリー";
+  logLine("exec", 'エントリー ' + pick(symSet().pairs) + ' · ' + (side==="buy"?"BUY":"SELL")
+    + ' · 根拠 <span class="w">' + pick(TOPICS)[0] + '</span> の学習結果');
+  paintCounters();
+  setTimeout(() => { $("cvState").textContent = "保有中"; }, 1600/S.speed);
+}
+function closeTrade(){
+  if(S.open > 0) S.open--;
+  const base = TRADE_BASE;
+  const win = Math.random() < WIN_RATE;
+  const pl = win ? base * rnd(WIN_MULT[0], WIN_MULT[1]) : -base * rnd(LOSS_MULT[0], LOSS_MULT[1]);
+  S.today += pl; S.trades++; if(win) S.wins++;
+  S.hist.push(S.today); if(S.hist.length > 140) S.hist.shift();
+
+  MK.marks.push({ i: MK.candles.length, type:"exit", win, price: MK.px });
+  if(MK.marks.length > 10) MK.marks.shift();
+
+  const el = $("todayPL");
+  el.classList.remove("bump"); void el.offsetWidth; el.classList.add("bump");
+  $("todayDelta").textContent = yen(pl) + " · 直近の決済";
+  $("todayDelta").style.color = pl >= 0 ? "var(--green)" : "var(--red)";
+  $("cvState").textContent = "決済";
+  setTimeout(() => { $("cvState").textContent = "監視中"; }, 1800/S.speed);
+
+  logLine(win ? "done" : "info", '決済 · <span class="' + (win?"g":"") + '">' + yen(pl)
+    + '</span> · 結果を学習キューへ投入');
+  paintCounters(); drawSpark();
+  addXP(rndi(XP_TRADE[0], XP_TRADE[1]));
+}
+
+/* ================= ticker ================= */
+function buildTicker(){
+  const mk = () => symSet().ticker.map(o => {
+    const chg = rnd(-0.45,0.62);
+    return '<span class="ticker-item"><span class="sym">'+o.s+'</span>'
+      + '<span class="px">'+(o.b*(1+chg/100)).toFixed(o.d)+'</span>'
+      + '<span class="chg '+(chg>=0?"up":"dn")+'">'+(chg>=0?"+":"")+chg.toFixed(2)+'%</span></span>';
+  }).join("");
+  $("tickerTrack").innerHTML = mk() + mk();
+  $("cvSym").textContent = symSet().note;
+}
+
+/* ================= loops ================= */
+let tOpen = null, tClose = null;
+function schedule(){
+  clearTimeout(tOpen); clearTimeout(tClose);
+  const o = () => { openTrade();  tOpen  = setTimeout(o, rnd(CFG.entrySec[0], CFG.entrySec[1])*1000/S.speed); };
+  const c = () => { closeTrade(); tClose = setTimeout(c, rnd(CFG.tradeSec[0], CFG.tradeSec[1])*1000/S.speed); };
+  tOpen  = setTimeout(o, rnd(2500, 5000)/S.speed);
+  tClose = setTimeout(c, rnd(4000, 8000)/S.speed);
+}
+
+/* ================= keyboard（録画用ショートカット） ================= */
+addEventListener("keydown", e => {
+  const g = $("gate");
+  if(g && g.style.display !== "none" && !g.classList.contains("hide")) return;  // ゲート中は無効
+  const t = e.target;
+  if(t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA")) return;
+  const k = e.key.toLowerCase();
+  if(k === "l"){ S.xp = XP_MAX; levelUp(); }
+  else if(k === "k"){ const i = TASKS.findIndex(t2 => !t2.done); if(i >= 0){ TASKS[i].got = TASKS[i].need; completeTask(i); } }
+  else if(k === "1"){ S.speed = 1;   schedule(); }
+  else if(k === "2"){ S.speed = 2;   schedule(); }
+  else if(k === "3"){ S.speed = 0.5; schedule(); }
+  else if(k === "h"){ const h = $("hint"); if(h) h.remove(); }
+});
+
+/* ================= カスタム設定（TUNE）配線 ================= */
+function fmtYen(v){ return "¥" + Math.round(v).toLocaleString(); }
+function tunePaint(){
+  $("eYenV").textContent   = fmtYen(TCFG.yen10);
+  $("eYenHr").textContent  = fmtYen(TCFG.yen10 * 6);
+  $("eTodayV").textContent = fmtYen(TCFG.startYen);
+  $("eMinV").textContent   = TCFG.minLv + "分";
+  $("eLvHr").textContent   = (60 / TCFG.minLv).toFixed(1);
+  $("eXpMax").textContent  = num(XP_MAX);
+  $("eLvV").textContent    = "LV." + TCFG.startLv;
+  $("eCapV").textContent   = (LV_CAP - TCFG.startLv) + "%";
+  $("eChV").textContent    = TCFG.chartSpeed.toFixed(1) + "×";
+  $("eLabAbs").classList.toggle("sel",  TCFG.labels !== "real");
+  $("eLabReal").classList.toggle("sel", TCFG.labels === "real");
+}
+function tuneInit(){
+  $("eYen").value   = TCFG.yen10;
+  $("eToday").value = TCFG.startYen;
+  $("eMin").value   = TCFG.minLv;
+  $("eLv").value    = TCFG.startLv;
+  $("eCh").value    = TCFG.chartSpeed;
+  tunePaint();
+}
+function tuneOpen(){ tuneInit(); $("eTune").classList.add("open"); }
+function tuneClose(){ $("eTune").classList.remove("open"); }
+(function(){
+  const ov = $("eTune");
+  $("eTuneX").addEventListener("click", tuneClose);
+  ov.addEventListener("click", e => { if(e.target === ov) tuneClose(); });
+
+  $("eYen").addEventListener("input", e => {
+    TCFG.yen10 = parseInt(e.target.value,10); recalc(true); saveCfg(); tunePaint(); paintXP();
+  });
+  $("eToday").addEventListener("input", e => {
+    TCFG.startYen = parseInt(e.target.value,10); saveCfg(); tunePaint();
+    seedToday(TCFG.startYen); paintCounters(); drawSpark();
+  });
+  $("eMin").addEventListener("input", e => {
+    TCFG.minLv = parseInt(e.target.value,10); recalc(true); saveCfg(); tunePaint(); paintXP();
+  });
+  $("eLv").addEventListener("input", e => {
+    TCFG.startLv = parseInt(e.target.value,10); saveCfg();
+    S.level = TCFG.startLv; tunePaint(); paintXP(); paintHdr();
+  });
+  $("eCh").addEventListener("input", e => {
+    TCFG.chartSpeed = parseFloat(e.target.value); saveCfg(); tunePaint(); applyChartSpeed();
+  });
+  $("eLabAbs").addEventListener("click",  () => { TCFG.labels = "abs";  saveCfg(); tunePaint(); buildTicker(); });
+  $("eLabReal").addEventListener("click", () => { TCFG.labels = "real"; saveCfg(); tunePaint(); buildTicker(); });
+  $("eTuneReset").addEventListener("click", () => {
+    TCFG = Object.assign({}, DEF); saveCfg();
+    S.level = TCFG.startLv; recalc(true); applyChartSpeed(); buildTicker();
+    seedToday(TCFG.startYen); paintCounters(); drawSpark(); paintXP(); paintHdr(); tuneInit();
+  });
+})();
+
+/* ================= boot ================= */
+addEventListener("resize", () => { drawChart(); drawAcc(); });
+buildTicker();
+paintXP(); paintHdr(); paintCounters(); drawAcc(); drawSpark(); drawChart();
+S.xp = Math.min(XP_MAX - 1, rndi(2600, 9200)); paintXP();
+logLine("info", 'EVOLUTION CORE 起動 · GEN G-' + S.level + ' をロード');
+logLine("info", '学習済み約定 ' + num(S.learn) + ' 件 · 検証済み仮説 ' + num(S.hypo) + ' 件');
+TASKS.forEach(t => logLine("learn", '学習中 <span class="w">' + t.name + '</span> · 目標サンプル ' + num(t.need) + ' 件'));
+for(let i=0;i<3;i++) logLine("learn", pick(MICRO)());
+applyChartSpeed();
+schedule();
+</script>
+
+<script>
+/* ===== テーマ切替ギア ===== */
+(function(){
+  var btn=document.getElementById("gearBtn"),menu=document.getElementById("gearMenu");
+  btn.addEventListener("click",function(e){e.stopPropagation();menu.classList.toggle("open");btn.classList.toggle("on",menu.classList.contains("open"));});
+  document.addEventListener("click",function(){menu.classList.remove("open");btn.classList.remove("on");});
+  menu.addEventListener("click",function(e){
+    var it=e.target.closest(".gm-i"); if(!it)return;
+    if(it.id==="eTuneOpen"){ if(typeof tuneOpen==="function") tuneOpen(); menu.classList.remove("open");btn.classList.remove("on"); return; }
+    var th=it.dataset.theme; if(!th) return;
+    try{localStorage.setItem("aee_theme",th);}catch(x){}
+    if(th!=="e") location.href=it.dataset.href+"?cb="+Date.now();
+    menu.classList.remove("open");btn.classList.remove("on");
+  });
+})();
+
+/* ===== 合言葉ゲート（SHA-256ハッシュ照合・平文はソースに残らない） ===== */
+(function(){
+  "use strict";
+  var EXPECTED = "610a56280323723390c0aab513bfb3b030ed43539311425af77c87fd08e76740";
+  var KEY = "aee_gate_ok";
+
+  // 自己完結SHA-256（crypto.subtle非対応環境でも動く / geraintluff実装ベース）
+  function sha256(ascii){
+    function rr(v,a){return (v>>>a)|(v<<(32-a));}
+    var mp=Math.pow, maxWord=mp(2,32), res="", words=[], i,j;
+    var bitLen=ascii.length*8;
+    var hash=sha256.h=sha256.h||[], k=sha256.k=sha256.k||[];
+    var pc=k.length, comp={};
+    for(var cand=2; pc<64; cand++){
+      if(!comp[cand]){
+        for(i=0;i<313;i+=cand){comp[i]=cand;}
+        hash[pc]=(mp(cand,.5)*maxWord)|0;
+        k[pc++]=(mp(cand,1/3)*maxWord)|0;
+      }
+    }
+    ascii+="\x80";
+    while(ascii.length%64-56) ascii+="\x00";
+    for(i=0;i<ascii.length;i++){
+      j=ascii.charCodeAt(i);
+      if(j>>8) return "";
+      words[i>>2]|=j<<((3-i)%4)*8;
+    }
+    words[words.length]=(bitLen/maxWord)|0;
+    words[words.length]=bitLen;
+    for(j=0;j<words.length;){
+      var w=words.slice(j,j+=16), oldHash=hash;
+      hash=hash.slice(0,8);
+      for(i=0;i<64;i++){
+        var w15=w[i-15], w2=w[i-2];
+        var a=hash[0], e=hash[4];
+        var t1=hash[7]+(rr(e,6)^rr(e,11)^rr(e,25))+((e&hash[5])^((~e)&hash[6]))+k[i]
+          +(w[i]=(i<16)?w[i]:(w[i-16]+(rr(w15,7)^rr(w15,18)^(w15>>>3))+w[i-7]
+            +(rr(w2,17)^rr(w2,19)^(w2>>>10)))|0);
+        var t2=(rr(a,2)^rr(a,13)^rr(a,22))+((a&hash[1])^(a&hash[2])^(hash[1]&hash[2]));
+        hash=[(t1+t2)|0].concat(hash);
+        hash[4]=(hash[4]+t1)|0;
+      }
+      for(i=0;i<8;i++){hash[i]=(hash[i]+oldHash[i])|0;}
+    }
+    for(i=0;i<8;i++){
+      for(j=3;j+1;j--){
+        var b=(hash[i]>>(j*8))&255;
+        res+=((b<16)?0:"")+b.toString(16);
+      }
+    }
+    return res;
+  }
+  function toUtf8(s){ return unescape(encodeURIComponent(s)); }
+
+  var gate=document.getElementById("gate");
+  var input=document.getElementById("gateInput");
+  var btn=document.getElementById("gateBtn");
+  var err=document.getElementById("gateErr");
+
+  function unlock(){
+    gate.classList.add("hide");
+    setTimeout(function(){
+      gate.style.display="none";
+      if(typeof drawChart==="function") drawChart();
+      if(typeof drawAcc==="function") drawAcc();
+      if(typeof drawSpark==="function") drawSpark();
+    }, 380);
+  }
+  function tryPass(){
+    var v=input.value||"";
+    if(sha256(toUtf8(v))===EXPECTED){
+      try{ sessionStorage.setItem(KEY,"1"); }catch(e){}
+      unlock();
+    } else {
+      err.textContent="合言葉が違います";
+      input.value="";
+      input.focus();
+    }
+  }
+  btn.addEventListener("click", tryPass);
+  input.addEventListener("keydown", function(e){ if(e.key==="Enter") tryPass(); });
+
+  try{
+    if(sessionStorage.getItem(KEY)==="1"){ unlock(); }
+    else { setTimeout(function(){ input.focus(); }, 100); }
+  }catch(e){ setTimeout(function(){ input.focus(); }, 100); }
+})();
+</script>
+</body>
+</html>
