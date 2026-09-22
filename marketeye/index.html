@@ -11,7 +11,7 @@
 <meta name="format-detection" content="telephone=no">
 <link rel="manifest" href="manifest.webmanifest">
 <title>MarketEye｜Chart Analysis</title>
-<!-- built 2026-09-22 16:38 / bars→2026-09-21 16:48 -->
+<!-- built 2026-09-22 17:04 / bars→2026-09-21 16:48 -->
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>
   :root{
@@ -288,6 +288,14 @@
          padding:11px 16px; border-radius:12px; max-width:88vw; text-align:center; opacity:0; pointer-events:none;
          transition:opacity .2s ease, transform .2s ease; z-index:120; box-shadow:0 10px 30px rgba(0,0,0,.5)}
   .toast.on{opacity:1; transform:translateX(-50%) translateY(0)}
+  .mchint{font-size:11px; line-height:1.7; color:var(--faint); margin:6px 0 2px}
+  .mchint.ok{color:var(--teal-ink)}
+  .mchint.ng{color:var(--amber)}
+  .pvplan{display:grid; grid-template-columns:auto 1fr; gap:2px 12px; margin:2px 0 10px}
+  .pvplan i{font-style:normal; color:var(--faint); font-family:var(--mono); font-size:10.5px; letter-spacing:.1em}
+  .pvplan b{font-family:var(--mono); font-weight:700}
+  .pvsec{margin-top:12px}
+  .pvsec u{display:block; text-decoration:none; font-family:var(--mono); font-size:10px; letter-spacing:.18em; color:var(--teal); margin-bottom:3px}
 </style>
 </head>
 <body>
@@ -467,13 +475,14 @@
     </div>
     <div class="ed-rail" id="edRail">
       <div class="step" id="st0">
-        <div class="sh"><span class="n">A</span>自動照合</div>
+        <div class="sh"><span class="n">A</span>価格の読み取り</div>
         <div class="ocrmsg" id="ocrMsg">画像を読み込むと、内蔵データと照合して価格・時間足を自動で合わせます。</div>
         <div class="row" id="reMatchRow" style="display:none"><button type="button" id="csvCalBtn" class="auto">もう一度照合する</button></div>
       </div>
       <div class="step" id="manualCal" style="display:none">
         <div class="sh"><span class="n">価</span>価格を入れる</div>
-        <div class="sd">チャート右の目盛りから読んで、引いた2本の線の価格を入れてください。<b>これだけで仕込めます</b>（照合は要りません）。</div>
+        <div class="sd">引いた2本の線の価格。<b>自動で読めたらそのまま、読めなければ入れるだけ</b>で仕込めます。</div>
+        <div class="mchint" id="mcFrom"></div>
         <div class="grid2">
           <div class="f"><label>基準1（エントリー）の価格</label><input type="text" id="mcP1" inputmode="decimal" placeholder="例: 4383.34"></div>
           <div class="f"><label>基準2（利確）の価格</label><input type="text" id="mcP2" inputmode="decimal" placeholder="例: 4219.73"></div>
@@ -985,7 +994,22 @@ function pvOpen(p){
         +'利確1　　  '+fmt(p.tp1,d)+'　利確2 '+fmt(p.tp2,d)+'\n'
         +'（旧形式の仕込み。画像は縮小版のみ）';
   }
-  $('pvInfo').innerHTML=info;
+  const T=TEMPLATES[Math.min(S.r_tpl,TEMPLATES.length-1)], ti=long?0:1;
+  const row=(k,v)=>'<i>'+k+'</i><b>'+v+'</b>';
+  const refine = (p.v2 && p.v2.dsKey)
+    ? '<div style="color:var(--faint);font-size:10.5px;margin-top:-4px">※ 本番で場面が一致したときは、映っている位置に合わせて引き直します</div>'
+    : '<div style="color:var(--faint);font-size:10.5px;margin-top:-4px">※ 本番ではこの数値をそのまま出します</div>';
+  $('pvInfo').innerHTML = info
+    + '<div class="pvplan">'
+    + row('DIRECTION', (long?'ロング':'ショート'))
+    + row('ENTRY', fmt(p.entry,d)) + row('STOP LOSS', fmt(p.sl,d))
+    + row('TP1', fmt(p.tp1,d)) + row('TP2', fmt(p.tp2,d))
+    + '</div>' + refine
+    + '<div class="pvsec"><b>'+esc(T.t[ti])+'</b><br><span style="color:var(--faint)">'+esc(T.s[ti])+'</span></div>'
+    + '<div class="pvsec"><u>市況スナップショット</u>'+esc(T.snap[ti])+'</div>'
+    + '<div class="pvsec"><u>構造分析</u>'+esc(T.str[ti])+'</div>'
+    + '<div class="pvsec"><u>エントリー根拠</u>'+esc(T.rsn[ti])+'</div>'
+    + '<div style="color:var(--faint);font-size:10.5px;margin-top:12px">本文はテンプレート「'+esc(T.name)+'」。設定の「分析文テンプレート」で変わります</div>';
   $('pvView').classList.add('on');
 }
 function pvClose(){ $('pvView').classList.remove('on'); }
@@ -1017,7 +1041,7 @@ function edOpen(){ ED.open=true; $('editor').classList.add('on'); if(!ED.img) ed
 function edClose(){ ED.open=false; $('editor').classList.remove('on'); ED.arm=null; loupe.style.display='none'; }
 function edResetImage(){
   ED.img=null; ED.en=ED.tg=null; ED.arm=null;
-  ED.cal=null; ED.cells=null; ED.crop=null;
+  ED.cal=null; ED.calCsv=null; ED.ocr=undefined; ED.cells=null; ED.crop=null;
   $('edDrop').style.display='block'; edCv.style.display='none'; $('edReload').style.display='none';
   $('edSample').style.display='inline-block';
   $('reMatchRow').style.display='none';
@@ -1040,7 +1064,7 @@ function edSetImage(src){
   const im=new Image();
   im.onload=()=>{
     ED.img=im; ED.nat={w:im.naturalWidth,h:im.naturalHeight};
-    ED.en=ED.tg=null; ED.cal=null; ED.cells=null; ED.crop=null;
+    ED.en=ED.tg=null; ED.cal=null; ED.calCsv=null; ED.ocr=undefined; ED.cells=null; ED.crop=null;
     $('edDrop').style.display='none'; edCv.style.display='block';
     $('edReload').style.display='inline-block'; $('edSample').style.display='none';
     $('reMatchRow').style.display='none';
@@ -1155,7 +1179,7 @@ function cropXn(xn){ const c=ED.crop||{}; const l=c.l||0, r=c.r||0; return (xn-l
 /* 答え画像を読み込んだ直後の全自動処理：
    ローソク抽出（自動リトライ）→ CSVバンク横断照合 → 高さ↔価格を最小二乗で確定 */
 function edIdentify(){
-  ED.cal=null; ED.cells=null; ED.crop=null;
+  ED.cal=null; ED.calCsv=null; ED.cells=null; ED.crop=null;
   if(!ED.img) return;
   if(!dHasData()){
     edIdentifyFail('内蔵データがまだ展開されていません。下に価格を入れれば、照合なしでそのまま仕込めます。');
@@ -1163,7 +1187,7 @@ function edIdentify(){
   }
   const r=extractSmart(ED.img, cands=>matchCandlesBank(cands));
   if(r.err){
-    edIdentifyFail('自動照合できませんでした（'+r.err+'）。出来高や注文マーカー・描画を消して、チャート部分を撮り直してみてください。');
+    edIdentifyFail('内蔵データの中には見つかりませんでした。そのままで大丈夫です——線を2本引いて、下に価格を2つ入れれば仕込めます。');
     edSyncRail(); return;
   }
   const ex=r.ex, mt=r.mt;
@@ -1178,11 +1202,11 @@ function edIdentify(){
   }
   const den=n2*sxx-sx*sx;
   if(Math.abs(den)<1e-12 || !((n2*sxy-sx*sy)/den<0)){
-    edIdentifyFail('価格の対応を作れませんでした。チャート部分を撮り直してみてください。');
+    edIdentifyFail('価格を自動で出せませんでした。線を2本引いて、下に価格を2つ入れてください。');
     edSyncRail(); return;
   }
   const bb2=(n2*sxy-sx*sy)/den, aa2=(sy*sxx-sx*sxy)/den;
-  ED.cal={ mode:'csv', aa:aa2, bb:bb2, s0:s0, idx:mt.idx,
+  ED.cal=ED.calCsv={ mode:'csv', aa:aa2, bb:bb2, s0:s0, idx:mt.idx,
            dsKey:dsKey(S.data.meta), meta:S.data.meta, score:mt.score };
   const m=S.data.meta||{};
   ocrSay('自動照合OK：'+(m.sym||'')+'・'+(m.tf||'')+'（一致度 '+(mt.score*100).toFixed(1)+'%／'+fmtT(DATA.t[mt.idx])+' の場面）','ok');
@@ -1195,7 +1219,7 @@ function edIdentifyFail(msg){
   ocrSay(msg,'ng');
   $('reMatchRow').style.display='flex';
   mcSync();
-  $('edSub').textContent='線を2本引いて、下に価格を入れてください（照合は要りません）';
+  $('edSub').textContent='線を2本引いてください（価格は自動で入るか、下に入れるだけ）';
   if(!ED.en) armPick('en');   /* 照合が通らなくてもそのまま線を引けるように待ち受ける */
 }
 function edDraw(){
@@ -1254,7 +1278,8 @@ $('pickTg').addEventListener('click',()=>armPick('tg'));
 /* 画像上のy（元画像基準）から価格を計算。照合が切り抜きで通っていても正しく変換する */
 function priceAt(yn){
   if(!ED.cal) return NaN;
-  return ED.cal.aa + ED.cal.bb*cropYn(yn);
+  /* 照合で作った較正だけが切り抜き座標。手入力・目盛り読みは元画像そのまま */
+  return ED.cal.aa + ED.cal.bb*(ED.cal.mode==='csv' ? cropYn(yn) : yn);
 }
 function edDec(){ return ED.cal ? (ED.cal.mode==='manual' ? ED.cal.dec : DATA.dec) : 2; }
 /* 答え画像のローソク列を価格単位のバー配列にする（本番のフォールバック照合用） */
@@ -1274,7 +1299,7 @@ function edCompute(){
   if(!ED.img) return {err:'答え画像を読み込んでください'};
   if(!ED.en) return {err:'基準1（エントリーの線）の高さでクリックしてください'};
   if(!ED.tg) return {err:'基準2（利確の線）の高さでクリックしてください'};
-  if(!ED.cal) return {err:'引いた2本の線の価格を下に入れてください（チャート右の目盛りから読んで）'};
+  if(!ED.cal) return {err:'あと少し：引いた2本の線の価格を下に入れてください。この2つだけで仕込めます'};
   const d=edDec(), step=Math.pow(10,-d);
   const p1=rnd(priceAt(ED.en.yn),d), p2=rnd(priceAt(ED.tg.yn),d);
   if(!isFinite(p1)||!isFinite(p2)) return {err:'価格を出せませんでした。もう一度照合してください'};
@@ -2621,11 +2646,16 @@ $('csvCalBtn').addEventListener('click',()=>{
 });
 
 /* =====================================================================
-   ②答え仕込み：照合に頼らず、線2本だけで完結させるための層
-   ・自動照合が通ればそれを使う（価格が勝手に入るので速い）
-   ・通らなければ、2本の線の価格を手で入れるだけで仕込める
-     → データが無い銘柄・時間足でも、CSVが無くても仕込める
-   ・本番で照合が外れても黙って仕込んだ数値を出す（警告は画に映るので出さない）
+   ②答え仕込み：価格の決め方を3通り持ち、どれも駄目でも止まらないようにする層
+
+   強い順:
+     1) 手で入れた2つの価格 … 入れたら必ずこれが勝つ
+     2) 内蔵データとの照合   … 通れば価格が自動で入り、本番の引き直しも効く
+
+   画像の目盛りをOCRで読む道も試したが、実測で3回中2回外した（しかも黙って
+   間違った価格を入れてしまう）ので採らない。入力2つの方が速くて確実。
+
+   照合が通らないことを理由に仕込みを止めない。線2本＋価格2つで必ず成立する。
    ===================================================================== */
 function manualCal(){
   if(!ED.en || !ED.tg) return null;
@@ -2636,19 +2666,31 @@ function manualCal(){
   if(!isFinite(p1) || !isFinite(p2)) return null;
   const y1=ED.en.yn, y2=ED.tg.yn;
   if(Math.abs(y1-y2) < 1e-6) return null;
-  const bb=(p2-p1)/(y2-y1), aa=p1-bb*y1;          /* 高さ→価格の直線（2点で決まる） */
+  const bb=(p2-p1)/(y2-y1), aa=p1-bb*y1;
   return { mode:'manual', aa:aa, bb:bb, dec:Math.max(decOf(s1), decOf(s2)), dsKey:null };
 }
-/* 自動照合が通っていればそれを優先。無ければ手入力から作る */
 function edEnsureCal(){
-  if(ED.cal && ED.cal.mode==='csv') return;
-  ED.cal = manualCal();
+  const m=manualCal();
+  if(m){ ED.cal=m; return; }
+  ED.cal = ED.calCsv || null;
 }
 function mcSync(){
   const box=document.getElementById('manualCal');
   if(!box) return;
-  const auto = !!(ED.cal && ED.cal.mode==='csv');
-  box.style.display = auto ? 'none' : 'block';
+  box.style.display='block';                     /* 常に出す。逃げ道ではなく通常の入り口 */
+  const el=document.getElementById('mcFrom');
+  if(!el) return;
+  const c=ED.cal;
+  if(!c){
+    el.textContent='線を2本引いて、その2つの価格を入れれば仕込めます（照合は要りません）。';
+    el.className='mchint ng';
+  }else if(c.mode==='manual'){
+    el.textContent='入れてもらった価格で確定しています。';
+    el.className='mchint ok';
+  }else if(c.mode==='csv'){
+    el.textContent='内蔵データと一致したので価格は自動で入りました（入力は不要）。';
+    el.className='mchint ok';
+  }
 }
 ['mcP1','mcP2'].forEach(function(id){
   const el=document.getElementById(id);
@@ -3062,6 +3104,14 @@ if('serviceWorker' in navigator && window.isSecureContext
    && document.querySelector('link[rel="manifest"]')){
   window.addEventListener('load', function(){
     navigator.serviceWorker.register('./sw.js').catch(function(){});
+  });
+  /* 新しい版が入ったら1回だけ自動で読み込み直す。
+     これが無いと、古いキャッシュのまま「直したはずの不具合」が残り続ける */
+  var swReloaded=false;
+  navigator.serviceWorker.addEventListener('controllerchange', function(){
+    if(swReloaded) return;
+    swReloaded=true;
+    location.reload();
   });
 }
 
