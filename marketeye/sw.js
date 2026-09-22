@@ -1,7 +1,7 @@
-/* MarketEye service worker — 2026-09-22 00:43
+/* MarketEye service worker — 2026-09-22 16:32
    全部を先に取り込んで、次からはキャッシュを返す（＝オフラインで開く）。
    ビルドごとにキャッシュ名が変わるので、新しい版を開けば古いものは消える。 */
-const CACHE = 'marketeye-20260922-0043';
+const CACHE = 'marketeye-20260922-1632';
 const ASSETS = ['./', './index.html', './manifest.webmanifest',
                 './icon-192.png', './icon-512.png', './icon-512-maskable.png', './apple-touch-icon.png'];
 

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MarketEye｜Chart Analysis</title>
-<!-- PC web build 2026-09-22 00:53 / bars→2026-09-21 16:48 -->
+<!-- PC web build 2026-09-22 16:32 / bars→2026-09-21 16:48 -->
 <style>
   :root{
     --bg:#0c0a1e; --bg2:#110e28; --panel:#161233; --panel2:#1c1740; --inset:#0e0b22;
@@ -390,7 +390,7 @@
   <div class="tabs">
     <button type="button" id="tabAns" class="on">② 答え仕込み<small>画像から確定</small></button>
     <button type="button" id="tabMan" class="t-manual">手入力<small>数値を直接</small></button>
-    <button type="button" id="tabData" class="t-data">① データ照合<small>CSVで逆算</small></button>
+    <button type="button" id="tabData" class="t-data">① データ照合<small>内蔵データ</small></button>
   </div>
 
   <!-- pane: answer image -->
@@ -507,6 +507,14 @@
         <div class="sh"><span class="n">A</span>自動照合</div>
         <div class="ocrmsg" id="ocrMsg">画像を読み込むと、裏のデータと照合して価格・時間足を自動で合わせます。</div>
         <div class="row" id="reMatchRow" style="display:none"><button type="button" id="csvCalBtn" class="auto">もう一度照合する</button></div>
+      </div>
+      <div class="step" id="manualCal" style="display:none">
+        <div class="sh"><span class="n">価</span>価格を入れる</div>
+        <div class="sd">チャート右の目盛りから読んで、引いた2本の線の価格を入れてください。<b>これだけで仕込めます</b>（照合は要りません）。</div>
+        <div class="grid2">
+          <div class="f"><label>基準1（エントリー）の価格</label><input type="text" id="mcP1" inputmode="decimal" placeholder="例: 4383.34"></div>
+          <div class="f"><label>基準2（利確）の価格</label><input type="text" id="mcP2" inputmode="decimal" placeholder="例: 4219.73"></div>
+        </div>
       </div>
       <div class="step" id="st2">
         <div class="sh"><span class="n">1</span>基準1｜エントリーの線</div>
@@ -1162,7 +1170,7 @@ function edIdentify(){
   ED.cal=null; ED.cells=null; ED.crop=null;
   if(!ED.img) return;
   if(!dHasData()){
-    edIdentifyFail('内蔵データの展開待ちです。少し待ってから「もう一度照合する」を押してください。');
+    edIdentifyFail('内蔵データがまだ展開されていません。下に価格を入れれば、照合なしでそのまま仕込めます。');
     edSyncRail(); return;
   }
   const r=extractSmart(ED.img, cands=>matchCandlesBank(cands));
@@ -1198,7 +1206,8 @@ function edIdentify(){
 function edIdentifyFail(msg){
   ocrSay(msg,'ng');
   $('reMatchRow').style.display='flex';
-  $('edSub').textContent='自動照合できませんでした。撮り直すか「もう一度照合する」を押してください';
+  mcSync();
+  $('edSub').textContent='下に価格を入れれば、照合なしで仕込めます';
 }
 function edLayout(){
   if(!ED.img) return;
@@ -1306,7 +1315,7 @@ function priceAt(yn){
   if(!ED.cal) return NaN;
   return ED.cal.aa + ED.cal.bb*cropYn(yn);
 }
-function edDec(){ return ED.cal ? DATA.dec : 2; }
+function edDec(){ return ED.cal ? (ED.cal.mode==='manual' ? ED.cal.dec : DATA.dec) : 2; }
 /* 答え画像のローソク列を価格単位のバー配列にする（本番のフォールバック照合用） */
 function edImgBars(){
   if(!ED.cells || !ED.cal) return null;
@@ -1322,9 +1331,9 @@ function edImgBars(){
 }
 function edCompute(){
   if(!ED.img) return {err:'答え画像を読み込んでください'};
-  if(!ED.cal) return {err:'自動照合を待っています。失敗した時は撮り直すか「もう一度照合する」を押してください'};
   if(!ED.en) return {err:'基準1（エントリーの線）の高さでクリックしてください'};
   if(!ED.tg) return {err:'基準2（利確の線）の高さでクリックしてください'};
+  if(!ED.cal) return {err:'引いた2本の線の価格を下に入れてください（チャート右の目盛りから読んで）'};
   const d=edDec(), step=Math.pow(10,-d);
   const p1=rnd(priceAt(ED.en.yn),d), p2=rnd(priceAt(ED.tg.yn),d);
   if(!isFinite(p1)||!isFinite(p2)) return {err:'価格を出せませんでした。もう一度照合してください'};
@@ -1343,18 +1352,23 @@ function edCompute(){
   if(plan.tp2===plan.tp1)  plan.tp2 = rnd(plan.tp1  + (long?1:-1)*step, d);
   if(plan.sl ===plan.entry) plan.sl  = rnd(plan.entry - (long?1:-1)*step, d);
   /* 答え範囲内で基準2の線に届いているかの確認（届かなくても到達極値までで動く） */
-  let touched=false;
-  for(let k=ED.cal.s0;k<=ED.cal.idx;k++){
-    if(long ? DATA.h[k]>=p2-step*0.5 : DATA.l[k]<=p2+step*0.5){ touched=true; break; }
+  let touched=true;
+  if(ED.cal.mode==='csv' && dHasData()){
+    touched=false;
+    for(let k=ED.cal.s0;k<=ED.cal.idx;k++){
+      if(long ? DATA.h[k]>=p2-step*0.5 : DATA.l[k]<=p2+step*0.5){ touched=true; break; }
+    }
   }
   const imgBars=edImgBars();
   return { plan:plan, enP:p1, tgP:p2, touched:touched,
-    v2:{ src:'line', dsKey:ED.cal.dsKey,
-         aS:DATA.t[ED.cal.s0], aE:DATA.t[ED.cal.idx],
+    v2:{ src:'line', dsKey:(ED.cal.mode==='csv'? ED.cal.dsKey : null),
+         aS:(ED.cal.mode==='csv'? DATA.t[ED.cal.s0] : null),
+         aE:(ED.cal.mode==='csv'? DATA.t[ED.cal.idx] : null),
          p1:p1, p2:p2,
          pk:(imgBars?packBars(imgBars):null) } };
 }
 function edSyncRail(){
+  edEnsureCal(); mcSync();
   const st=(el,cond,act)=>{ el.classList.toggle('done',!!cond); el.classList.toggle('active',!!act); };
   st($('st0'), !!ED.cal, false);
   st($('st2'), !!ED.en, ED.arm==='en');
@@ -2230,7 +2244,8 @@ function answerPlan(imgEl, p){
       }else if(v.enT!=null){
         r=planTowardTargetB(DATA, cur, nearestIdx(v.tgT), v.tgP);
       }
-      if(r && !r.plan){ const r2=planFromIndexB(DATA, cur, dLook()); if(r2.plan){ r=r2; how='csv-ahead'; } }
+      /* 引き直せない＝いまの位置が答えの範囲の外。ここで先読みし直すと
+         仕込んだ向きと逆のプランが出てしまうので、仕込んだ数値をそのまま使う */
       if(r && r.plan){
         const m=S.data.meta||{};
         if(S.sym===DEF.sym && m.sym) S.sym=m.sym;
@@ -2252,14 +2267,15 @@ function answerPlan(imgEl, p){
           let r=null, how='img';
           if(v.src==='line') r=planTowardLineB(pb, cur, pb.n-1, v.p1, v.p2);
           else r=planTowardTargetB(pb, cur, v.tgI, v.tgP);
-          if(r && !r.plan && pb.n-1-cur>=3){ const r3=planFromIndexB(pb, cur, pb.n-1-cur); if(r3.plan){ r=r3; how='img-ahead'; } }
+          /* 同上。仕込んだ向きを裏切らない */
           if(r && r.plan) return {plan:r.plan, how:how, score:r2m.mt.score, cur:cur};
         }
       }
     }catch(e){}
   }
-  return {plan:answerStatic(p), how:'static',
-          warn:'照合できなかったため、仕込み時の想定値を表示しました（出来高・マーカーを消して撮り直すと通ります）'};
+  /* 照合は「いま映っている位置に数値を合わせ直す」ための味付けでしかない。
+     外れたら黙って仕込んだ数値を出す（警告を出すと撮影の画に映るため） */
+  return {plan:answerStatic(p), how:'static'};
 }
 
 /* ---------------- CSVから見本チャート画像を作る（テスト用） ---------------- */
@@ -3090,6 +3106,41 @@ function bakedBootAsync(done){
   };
   step();
 }
+
+/* =====================================================================
+   ②答え仕込み：照合に頼らず、線2本だけで完結させるための層
+   ・自動照合が通ればそれを使う（価格が勝手に入るので速い）
+   ・通らなければ、2本の線の価格を手で入れるだけで仕込める
+     → データが無い銘柄・時間足でも、CSVが無くても仕込める
+   ・本番で照合が外れても黙って仕込んだ数値を出す（警告は画に映るので出さない）
+   ===================================================================== */
+function manualCal(){
+  if(!ED.en || !ED.tg) return null;
+  const e1=document.getElementById('mcP1'), e2=document.getElementById('mcP2');
+  if(!e1 || !e2) return null;
+  const s1=e1.value.trim(), s2=e2.value.trim();
+  const p1=num(s1), p2=num(s2);
+  if(!isFinite(p1) || !isFinite(p2)) return null;
+  const y1=ED.en.yn, y2=ED.tg.yn;
+  if(Math.abs(y1-y2) < 1e-6) return null;
+  const bb=(p2-p1)/(y2-y1), aa=p1-bb*y1;          /* 高さ→価格の直線（2点で決まる） */
+  return { mode:'manual', aa:aa, bb:bb, dec:Math.max(decOf(s1), decOf(s2)), dsKey:null };
+}
+/* 自動照合が通っていればそれを優先。無ければ手入力から作る */
+function edEnsureCal(){
+  if(ED.cal && ED.cal.mode==='csv') return;
+  ED.cal = manualCal();
+}
+function mcSync(){
+  const box=document.getElementById('manualCal');
+  if(!box) return;
+  const auto = !!(ED.cal && ED.cal.mode==='csv');
+  box.style.display = auto ? 'none' : 'block';
+}
+['mcP1','mcP2'].forEach(function(id){
+  const el=document.getElementById(id);
+  if(el) el.addEventListener('input', function(){ edEnsureCal(); edDraw(); edSyncRail(); });
+});
 
 /* ---------------- boot ---------------- */
 applyBrand();
