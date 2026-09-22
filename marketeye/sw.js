@@ -1,9 +1,9 @@
-/* MarketEye service worker — 2026-09-22 20:36
+/* MarketEye service worker — 2026-09-22 23:33
    ・HTML（アプリ本体）は必ずネットワークを先に見る。
      キャッシュ優先にすると、直した版が永久に届かない（2026-09-22に実際にそうなった）。
    ・アイコン等の動かないファイルだけキャッシュ優先。
    ・オフラインのときだけキャッシュのHTMLを返す。 */
-const CACHE = 'marketeye-20260922-2036';
+const CACHE = 'marketeye-20260922-2333';
 const ASSETS = ['./', './index.html', './manifest.webmanifest',
                 './icon-192.png', './icon-512.png', './icon-512-maskable.png', './apple-touch-icon.png'];
 

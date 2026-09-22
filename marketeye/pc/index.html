@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MarketEye｜Chart Analysis</title>
-<!-- PC web build 2026-09-22 20:36 / bars→2026-09-21 16:48 -->
+<!-- PC web build 2026-09-22 23:33 / bars→2026-09-21 16:48 -->
 <style>
   :root{
     --bg:#0c0a1e; --bg2:#110e28; --panel:#161233; --panel2:#1c1740; --inset:#0e0b22;
@@ -297,6 +297,9 @@
   .pvplan i{font-style:normal; color:var(--faint); font-family:var(--mono); font-size:10.5px; letter-spacing:.1em}
   .pvplan b{font-family:var(--mono); font-weight:700}
   .pvsec{margin-top:12px}
+  .xfer{display:flex; gap:8px; margin-top:10px}
+  .xfer .ghost{flex:1; text-align:center}
+  .xhint{font-size:10.5px; color:var(--faint); line-height:1.7; margin-top:6px}
   .pvsec u{display:block; text-decoration:none; font-family:var(--mono); font-size:10px; letter-spacing:.18em; color:var(--teal); margin-bottom:3px}
 </style>
 </head>
@@ -407,6 +410,12 @@
     <button class="bigbtn" id="openEditor" type="button">答え画像を読み込む</button>
     <div class="subhead">仕込み済み</div>
     <div class="plist" id="plist"></div>
+    <div class="xfer">
+      <button type="button" class="ghost" id="expPresets">仕込みを書き出す</button>
+      <button type="button" class="ghost" id="impPresets">仕込みを読み込む</button>
+    </div>
+    <div class="xhint">同じブラウザならPC版と自動で共有されます。端末をまたぐとき（Mac→iPhone）だけ、書き出したファイルを送って読み込んでください。</div>
+    <input type="file" id="impFile" accept="application/json,.json" style="display:none">
   </div>
 
   <!-- pane: manual -->
@@ -3262,6 +3271,68 @@ function mcSync(){
   const el=document.getElementById(id);
   if(el) el.addEventListener('input', function(){ edEnsureCal(); edDraw(); edSyncRail(); });
 });
+
+/* =====================================================================
+   仕込みの受け渡し
+   ・同じブラウザなら PC版(/pc/) とスマホ版(/) は同じ localStorage を見る
+     （同一オリジン。キーも sg2 で揃えた）＝何もしなくても共有される
+   ・端末をまたぐとき（Macで仕込む → iPhoneで撮る）はファイルでやり取りする
+   ===================================================================== */
+function presetsExport(){
+  if(!S.presets.length){ toast('書き出す仕込みがありません'); return; }
+  const data={ marketeye:1, at:new Date().toISOString(),
+               presets:S.presets, tf:S.tf, sym:S.sym, conf:S.conf, tpl:S.tpl, brand:S.brand,
+               r_conf:S.r_conf, r_tpl:S.r_tpl };
+  let blob;
+  try{ blob=new Blob([JSON.stringify(data)],{type:'application/json'}); }
+  catch(e){ toast('書き出せませんでした'); return; }
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='marketeye-仕込み-'+(new Date().toISOString().slice(0,10))+'.json';
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ try{ URL.revokeObjectURL(a.href); }catch(e){} a.remove(); }, 1500);
+  toast(S.presets.length+'件を書き出しました。AirDrop等でスマホへ送って「読み込む」から選んでください');
+}
+function presetsImport(file){
+  if(!file) return;
+  const rd=new FileReader();
+  rd.onload=function(e){
+    let d=null;
+    try{ d=JSON.parse(String(e.target.result)); }catch(err){ d=null; }
+    const list=(d && Array.isArray(d.presets)) ? d.presets : null;
+    if(!list){ toast('この中に仕込みが見つかりません（書き出したJSONを選んでください）'); return; }
+    const have={}; S.presets.forEach(function(p){ have[p.id]=1; });
+    const add=list.filter(function(p){ return p && p.id && !have[p.id]; });
+    if(!add.length){ toast('新しい仕込みはありませんでした（すべて取り込み済み）'); return; }
+    S.presets = add.concat(S.presets);            /* 読み込んだものを上に */
+    if(S.presets.length>12) S.presets.length=12;
+    if(!S.activeId || !S.presets.some(function(p){return p.id===S.activeId;})) S.activeId=S.presets[0].id;
+    if(d.tf) S.tf=d.tf;
+    if(d.sym) S.sym=d.sym;
+    S.mode='answer';
+    if(!save()){
+      /* 容量オーバー：見返し用の大きい画像から順に落として入れ直す */
+      for(let i=S.presets.length-1;i>=0 && !save();i--){
+        if(S.presets[i].v2 && S.presets[i].v2.big) S.presets[i].v2.big=null;
+      }
+      if(!save()){ toast('保存容量が足りません。古い仕込みを削除してからもう一度読み込んでください'); return; }
+    }
+    setTab('answer'); renderPresets();
+    toast(add.length+'件を読み込みました');
+  };
+  rd.onerror=function(){ toast('ファイルを読めませんでした'); };
+  rd.readAsText(file);
+}
+(function(){
+  const ex=document.getElementById('expPresets'),
+        im=document.getElementById('impPresets'),
+        f =document.getElementById('impFile');
+  if(ex) ex.addEventListener('click', presetsExport);
+  if(im && f){
+    im.addEventListener('click', function(){ f.click(); });
+    f.addEventListener('change', function(e){ presetsImport(e.target.files[0]); e.target.value=''; });
+  }
+})();
 
 /* ---------------- boot ---------------- */
 applyBrand();
