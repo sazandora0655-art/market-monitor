@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MarketEye｜Chart Analysis</title>
-<!-- PC web build 2026-09-22 23:33 / bars→2026-09-21 16:48 -->
+<!-- PC web build 2026-09-22 23:40 / bars→2026-09-21 16:48 -->
 <style>
   :root{
     --bg:#0c0a1e; --bg2:#110e28; --panel:#161233; --panel2:#1c1740; --inset:#0e0b22;
@@ -3278,20 +3278,39 @@ function mcSync(){
      （同一オリジン。キーも sg2 で揃えた）＝何もしなくても共有される
    ・端末をまたぐとき（Macで仕込む → iPhoneで撮る）はファイルでやり取りする
    ===================================================================== */
-function presetsExport(){
+async function presetsExport(){
   if(!S.presets.length){ toast('書き出す仕込みがありません'); return; }
   const data={ marketeye:1, at:new Date().toISOString(),
                presets:S.presets, tf:S.tf, sym:S.sym, conf:S.conf, tpl:S.tpl, brand:S.brand,
                r_conf:S.r_conf, r_tpl:S.r_tpl };
-  let blob;
-  try{ blob=new Blob([JSON.stringify(data)],{type:'application/json'}); }
-  catch(e){ toast('書き出せませんでした'); return; }
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download='marketeye-仕込み-'+(new Date().toISOString().slice(0,10))+'.json';
-  document.body.appendChild(a); a.click();
-  setTimeout(function(){ try{ URL.revokeObjectURL(a.href); }catch(e){} a.remove(); }, 1500);
-  toast(S.presets.length+'件を書き出しました。AirDrop等でスマホへ送って「読み込む」から選んでください');
+  let json;
+  try{ json=JSON.stringify(data); }catch(e){ toast('書き出せませんでした'); return; }
+  const fname='marketeye-shikomi-'+(new Date().toISOString().slice(0,10))+'.json';
+
+  /* claude.ai のアーティファクトの中では、ページから直接ファイルを保存できない
+     （リンクを置いても無反応になる）。その場合だけ専用の保存機能を通す。
+     GitHub Pages では window.claude が無いので、従来どおりリンクで保存する。 */
+  let dl=null;
+  try{ if(window.claude && typeof claude.use==='function') dl=await claude.use('downloads'); }catch(e){}
+  if(dl && typeof dl.save==='function'){
+    try{
+      await dl.save({filename:fname, data:json});
+      toast(S.presets.length+'件を書き出しました');
+    }catch(err){
+      const code=(err&&err.code)||'';
+      if(code!=='declined') toast('書き出せませんでした（'+(code||'不明')+'）');
+    }
+    return;
+  }
+  try{
+    const blob=new Blob([json],{type:'application/json'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download=fname;
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ try{ URL.revokeObjectURL(a.href); }catch(e){} a.remove(); }, 1500);
+    toast(S.presets.length+'件を書き出しました。AirDrop等でスマホへ送って「読み込む」から選んでください');
+  }catch(e){ toast('書き出せませんでした'); }
 }
 function presetsImport(file){
   if(!file) return;
