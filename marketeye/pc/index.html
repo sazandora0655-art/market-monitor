@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MarketEye｜Chart Analysis</title>
-<!-- PC web build 2026-09-22 16:32 / bars→2026-09-21 16:48 -->
+<!-- PC web build 2026-09-22 16:38 / bars→2026-09-21 16:48 -->
 <style>
   :root{
     --bg:#0c0a1e; --bg2:#110e28; --panel:#161233; --panel2:#1c1740; --inset:#0e0b22;
@@ -1207,7 +1207,8 @@ function edIdentifyFail(msg){
   ocrSay(msg,'ng');
   $('reMatchRow').style.display='flex';
   mcSync();
-  $('edSub').textContent='下に価格を入れれば、照合なしで仕込めます';
+  $('edSub').textContent='線を2本引いて、下に価格を入れてください（照合は要りません）';
+  if(!ED.en) armPick('en');   /* 照合が通らなくてもそのまま線を引けるように待ち受ける */
 }
 function edLayout(){
   if(!ED.img) return;
