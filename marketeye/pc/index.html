@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MarketEye｜Chart Analysis</title>
-<!-- PC web build 2026-09-22 18:20 / bars→2026-09-21 16:48 -->
+<!-- PC web build 2026-09-22 20:36 / bars→2026-09-21 16:48 -->
 <style>
   :root{
     --bg:#0c0a1e; --bg2:#110e28; --panel:#161233; --panel2:#1c1740; --inset:#0e0b22;
@@ -1347,7 +1347,7 @@ function priceAt(yn){
   /* 照合で作った較正だけが切り抜き座標。手入力・目盛り読みは元画像そのまま */
   return ED.cal.aa + ED.cal.bb*(ED.cal.mode==='csv' ? cropYn(yn) : yn);
 }
-function edDec(){ return ED.cal ? (ED.cal.mode==='manual' ? ED.cal.dec : DATA.dec) : 2; }
+function edDec(){ return ED.cal ? (ED.cal.mode==='csv' ? DATA.dec : ED.cal.dec) : 2; }
 /* 答え画像のローソク列を価格単位のバー配列にする（本番のフォールバック照合用） */
 function edImgBars(){
   if(!ED.cells || !ED.cal) return null;
@@ -3186,20 +3186,50 @@ function manualCal(){
   const bb=(p2-p1)/(y2-y1), aa=p1-bb*y1;
   return { mode:'manual', aa:aa, bb:bb, dec:Math.max(decOf(s1), decOf(s2)), dsKey:null };
 }
-/* 画像の右にある価格の目盛りをそのまま読む（1枚で完結する） */
+/* 画像の右にある価格の目盛りを読む（1枚で完結する）。
+
+   走査する列を必ず絞る。画面右の48%をまとめて見ると、十字カーソルの破線や
+   チャートの一部まで拾って数字が1つも読めなくなる（2026-09-22 実測。帯が21→52に増え
+   18個すべて空文字になった）。軸の位置は画像で違うので何通りか試し、
+   **目盛りが一番きれいに一直線に乗った列**を採る（正しい列の残差は誤った列の1/10だった）。 */
 function ocrCal(){
   if(!ED.img) return null;
   if(ED.ocr === undefined){
     ED.ocr = null;
-    try{ const r = ocrReadAxis(ED.img); if(r && r.ok && r.n>=3) ED.ocr = r; }catch(e){}
+    let best=null;
+    const hints=[0.84, 0.87, 0.90, 0.93, 0.96, null];
+    for(const h of hints){
+      let r=null;
+      try{ r = (h===null) ? ocrReadAxis(ED.img) : ocrReadAxis(ED.img, h); }catch(e){}
+      if(!r || !r.ok || !r.all || r.all.length<3) continue;
+      let n=0,sx=0,sy=0,sxx=0,sxy=0;
+      for(const q of r.all){ n++; sx+=q.yn; sy+=q.v; sxx+=q.yn*q.yn; sxy+=q.yn*q.v; }
+      const den=n*sxx-sx*sx;
+      if(Math.abs(den)<1e-12) continue;
+      const bb=(n*sxy-sx*sy)/den, aa=(sy*sxx-sx*sxy)/den;
+      if(!(bb<0)) continue;                                   /* 下ほど安い、が価格軸 */
+      if(Math.abs(r.all[r.all.length-1].yn - r.all[0].yn) < 0.15) continue;
+      let ss=0; for(const q of r.all){ const e=q.v-(aa+bb*q.yn); ss+=e*e; }
+      const rel=Math.sqrt(ss/n)/Math.abs(bb);                 /* 画面高に対する残差 */
+      if(!(rel<0.02)) continue;                               /* まるで乗っていない列は捨てる */
+      /* 残差だけで選ぶと危ない。ラベルの左端を切った列は「カンマが消えて桁が1つ増えた数字」を
+         きれいに等間隔で出すため、残差が一番小さくなってしまう（実測: 4,580→41680）。
+         カンマが読めている列＝ラベル全体が入っている列を第一に採る。 */
+      const txts=(r.dbg||[]).filter(function(t){ return t; });
+      const wf = txts.length ? txts.filter(function(t){ return /,\d{3}/.test(t); }).length/txts.length : 0;
+      const score=(1-wf)*10 + rel - n*1e-5;                   /* カンマ優先 → 残差 → 目盛りの数 */
+      if(!best || score<best.score) best={score:score, aa:aa, bb:bb, n:n, rel:rel, wf:wf};
+      if(wf>0.6 && rel<2e-4 && n>=5) break;                   /* 文句なしなら打ち切り */
+    }
+    if(best){
+      const mid=Math.abs(best.aa+best.bb*0.5);
+      best.dec = mid>=100 ? 2 : (mid>=10 ? 3 : 5);            /* 桁は値の大きさから決める */
+    }
+    ED.ocr = best;
   }
-  const r = ED.ocr;
-  if(!r) return null;
-  const y1=r.top.yn, y2=r.bot.yn;
-  if(Math.abs(y1-y2) < 1e-6) return null;
-  const bb=(r.bot.v-r.top.v)/(y2-y1), aa=r.top.v-bb*y1;
-  if(!isFinite(aa) || !isFinite(bb) || !(bb<0)) return null;
-  return { mode:'ocr', aa:aa, bb:bb, dec:(r.dec!=null?r.dec:2), dsKey:null, n:r.n };
+  const b=ED.ocr;
+  if(!b) return null;
+  return { mode:'ocr', aa:b.aa, bb:b.bb, dec:b.dec, dsKey:null, n:b.n };
 }
 function edEnsureCal(){
   const m=manualCal();
