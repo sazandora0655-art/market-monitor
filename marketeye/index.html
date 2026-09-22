@@ -11,7 +11,7 @@
 <meta name="format-detection" content="telephone=no">
 <link rel="manifest" href="manifest.webmanifest">
 <title>MarketEye｜Chart Analysis</title>
-<!-- built 2026-09-22 17:04 / bars→2026-09-21 16:48 -->
+<!-- built 2026-09-22 18:20 / bars→2026-09-21 16:48 -->
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>
   :root{
@@ -1216,10 +1216,16 @@ function edIdentify(){
   armPick('en');
 }
 function edIdentifyFail(msg){
-  ocrSay(msg,'ng');
   $('reMatchRow').style.display='flex';
-  mcSync();
-  $('edSub').textContent='線を2本引いてください（価格は自動で入るか、下に入れるだけ）';
+  edEnsureCal(); mcSync();
+  if(ED.cal && ED.cal.mode==='ocr'){
+    /* 内蔵データに無くても、画像の目盛りから価格が決まっていれば何も問題ない */
+    ocrSay('画像の右の目盛りから価格を読み取りました（'+ED.cal.n+'個が一直線）。このまま線を2本引いてください。','ok');
+    $('edSub').textContent='基準1（エントリーの線）の高さをタップ';
+  }else{
+    ocrSay(msg,'ng');
+    $('edSub').textContent='線を2本引いてください（価格は自動で入るか、下に入れるだけ）';
+  }
   if(!ED.en) armPick('en');   /* 照合が通らなくてもそのまま線を引けるように待ち受ける */
 }
 function edDraw(){
@@ -2634,6 +2640,429 @@ function dBoot(){
 }
 
 
+/* =====================================================================
+   価格目盛りの自動読み取り
+   ・画像の右にある価格ラベル（数字）をそのまま読んで、基準①②を自動で埋める
+   ・数字の判定は、同じ大きさで描いた見本との形の一致で行う（外部ライブラリ無し）
+   ===================================================================== */
+const OCR = {
+  fonts:[
+    '-apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif',
+    '"Trebuchet MS", Tahoma, Geneva, sans-serif',
+    'Verdana, Geneva, sans-serif',
+    'Roboto, "Noto Sans", "Segoe UI", sans-serif',
+    'ui-monospace, Menlo, Consolas, monospace'
+  ],
+  cache:{}
+};
+const OGW=12, OGH=18;
+
+/* 画素の切り出し → 固定サイズの特徴ベクトル（平均を引いて正規化） */
+function ocrPatch(g, stride, x0, y0, w, h){
+  const v=new Float32Array(OGW*OGH);
+  for(let j=0;j<OGH;j++){
+    const sy=y0+(j+0.5)*h/OGH;
+    const iy=Math.min(y0+h-1, Math.max(y0, Math.floor(sy)));
+    for(let i=0;i<OGW;i++){
+      const sx=x0+(i+0.5)*w/OGW;
+      const ix=Math.min(x0+w-1, Math.max(x0, Math.floor(sx)));
+      v[j*OGW+i]=g[iy*stride+ix];
+    }
+  }
+  let m=0; for(let i=0;i<v.length;i++) m+=v[i]; m/=v.length;
+  let s=0; for(let i=0;i<v.length;i++){ v[i]-=m; s+=v[i]*v[i]; }
+  s=Math.sqrt(s)||1;
+  for(let i=0;i<v.length;i++) v[i]/=s;
+  return v;
+}
+function ocrDot(a,b){ let s=0; for(let i=0;i<a.length;i++) s+=a[i]*b[i]; return s; }
+
+/* 数字の見本を、その画像の文字の高さに合わせて描く */
+function ocrTemplates(h, fam){
+  const key=h+'|'+fam;
+  if(OCR.cache[key]) return OCR.cache[key];
+  const chars='0123456789,.';
+  const size=Math.max(9, Math.round(h*1.34));
+  const pad=Math.ceil(size*0.7);
+  const cv=document.createElement('canvas');
+  cv.width=size*2+pad*2; cv.height=size*2+pad*2;
+  const c=cv.getContext('2d',{willReadFrequently:true});
+  const base=pad+size, list=[];
+  for(const ch of chars) for(const ph of [0,0.5]){
+    c.fillStyle='#000'; c.fillRect(0,0,cv.width,cv.height);
+    c.fillStyle='#fff'; c.font='400 '+size+'px '+fam;
+    c.textBaseline='alphabetic'; c.textAlign='left';
+    c.fillText(ch, pad+ph, base+ph);
+    const im=c.getImageData(0,0,cv.width,cv.height).data;
+    const g=new Float32Array(cv.width*cv.height);
+    let x0=1e9,y0=1e9,x1=-1,y1=-1;
+    for(let y=0;y<cv.height;y++){
+      for(let x=0;x<cv.width;x++){
+        const val=im[(y*cv.width+x)*4];
+        g[y*cv.width+x]=val;
+        if(val>40){ if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y; }
+      }
+    }
+    if(x1<0){ list.push(null); continue; }
+    list.push({ ch:ch, vec:ocrPatch(g,cv.width,x0,y0,x1-x0+1,y1-y0+1),
+                w:x1-x0+1, h:y1-y0+1, below:y1-base });
+  }
+  OCR.cache[key]=list;
+  return list;
+}
+
+/* 画像の価格目盛りを読む。hintXn を渡すと、その付近の列だけを見る */
+function ocrReadAxis(img, hintXn){
+  const nw=img.naturalWidth||img.width, nh=img.naturalHeight||img.height;
+  if(!nw||!nh) return {err:'画像がありません'};
+  const sc=Math.min(1, 1800/nw);
+  const W=Math.max(20,Math.round(nw*sc)), H=Math.max(20,Math.round(nh*sc));
+  const cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+  const cx=cv.getContext('2d',{willReadFrequently:true});
+  cx.drawImage(img,0,0,W,H);
+  let px;
+  try{ px=cx.getImageData(0,0,W,H).data; }catch(e){ return {err:'画像を読めません'}; }
+  const g=new Float32Array(W*H);
+  for(let i=0,p=0;i<W*H;i++,p+=4) g[i]=px[p]*0.299+px[p+1]*0.587+px[p+2]*0.114;
+
+  const x0 = hintXn!=null ? Math.max(0, Math.round(hintXn*W-W*0.085)) : Math.round(W*0.52);
+  const x1 = hintXn!=null ? Math.min(W-1, Math.round(hintXn*W+W*0.085)) : W-1;
+  if(x1-x0<20) return {err:'読み取る範囲が狭すぎます'};
+
+  /* 文字だけを取り出す。色のついた画素（ローソク等）は最初に除く */
+  const samp=[];
+  for(let y=0;y<H;y+=3) for(let x=x0;x<=x1;x+=3){
+    const p=(y*W+x)*4;
+    if(Math.max(px[p],px[p+1],px[p+2])-Math.min(px[p],px[p+1],px[p+2])>46) continue;
+    samp.push(g[y*W+x]);
+  }
+  if(samp.length<200) return {err:'文字が見つかりません'};
+  samp.sort((a,b)=>a-b);
+  const bg=samp[Math.floor(samp.length/2)];
+  /* ink = 背景からの離れ具合。明るいテーマ・暗いテーマのどちらでも同じ向きになる */
+  const ink=new Float32Array(W*H);
+  let peak=1;
+  for(let y=0;y<H;y++){
+    for(let x=x0;x<=x1;x++){
+      const i=y*W+x, p=i*4;
+      if(Math.max(px[p],px[p+1],px[p+2])-Math.min(px[p],px[p+1],px[p+2])>46) continue;
+      const v=Math.abs(g[i]-bg);
+      ink[i]=v; if(v>peak) peak=v;
+    }
+  }
+  const th=Math.max(30, peak*0.30);
+  const on=(x,y)=>ink[y*W+x]>th;
+
+  /* 行ごとに文字の量を数え、ラベルの帯を切り出す */
+  const rc=new Int32Array(H);
+  for(let y=0;y<H;y++){ let n=0; for(let x=x0;x<=x1;x++) if(on(x,y)) n++; rc[y]=n; }
+  const bands=[]; let s=-1;
+  for(let y=0;y<=H;y++){
+    const hit = y<H && rc[y]>0;
+    if(hit && s<0) s=y;
+    if(!hit && s>=0){
+      const h=y-s;
+      if(h>=6 && h<=Math.max(34, H*0.05)) bands.push({y0:s, y1:y-1, h:h});
+      s=-1;
+    }
+  }
+  if(bands.length<3) return {err:'価格の目盛りが見つかりません'};
+
+  /* 帯ごとに、文字の左右端と縦の範囲を求める */
+  for(const b of bands){
+    let left=-1, right=-1;
+    b.colTop=new Int32Array(x1-x0+1).fill(-1);
+    b.colBot=new Int32Array(x1-x0+1).fill(-1);
+    let inkN=0;
+    for(let x=x0;x<=x1;x++){
+      let t=-1, bt=-1;
+      for(let y=b.y0;y<=b.y1;y++) if(on(x,y)){ if(t<0) t=y; bt=y; inkN++; }
+      b.colTop[x-x0]=t; b.colBot[x-x0]=bt;
+      if(t>=0){ if(left<0) left=x; right=x; }
+    }
+    b.left=left; b.right=right;
+    b.w=(left<0?0:right-left+1);
+    b.ratio = b.w>0 ? inkN/(b.w*b.h) : 0;
+    /* 列の縦幅の中央値＝数字の高さ（コンマの尾に引っぱられない） */
+    const ext=[];
+    for(let i=0;i<b.colTop.length;i++) if(b.colTop[i]>=0) ext.push(b.colBot[i]-b.colTop[i]+1);
+    ext.sort((a,b2)=>a-b2);
+    b.dh = ext.length? ext[Math.floor(ext.length/2)] : b.h;
+  }
+  let cand=bands.filter(b=>b.left>=0 && b.ratio<0.5 && b.dh>=5);
+  if(cand.length<3) return {err:'価格の目盛りを読み取れません（帯'+bands.length+'/候補'+cand.length+'）'};
+
+  /* 同じ左端に揃った帯だけを1列として扱う */
+  let best=null;
+  for(const b of cand){
+    const grp=cand.filter(o=>Math.abs(o.left-b.left)<=Math.max(3,W*0.004));
+    if(!best || grp.length>best.length) best=grp;
+  }
+  if(!best || best.length<3) return {err:'価格の目盛りが揃っていません'};
+  best.sort((a,b)=>a.y0-b.y0);
+  const dhs=best.map(b=>b.dh).sort((a,b)=>a-b);
+  const gh=dhs[Math.floor(dhs.length/2)];
+  if(gh<5) return {err:'目盛りの文字が小さすぎます'};
+
+  /* 1つのラベルを読む。
+     数字がくっついていても読めるよう、切り出し位置を動的計画法で探す。
+     状態は「直前が区切り文字かどうか」の2つ（.. や ,, を防ぐ） */
+  function ocrLabel(b, tpl){
+    const L=b.left, R=b.right, n=R-L+1;
+    if(n<3) return {txt:'', score:0};
+    const NEG=-1e9, LAM=0.58, SEPX=0.24, MINSC=0.34;
+    const ref=tpl.find(t=>t.ch==='0') || tpl[0];
+    const cands=tpl.map(t=>({t:t, w:Math.max(1,Math.round(t.w*gh/ref.h)), sep:(t.ch===','||t.ch==='.')}));
+    const slack=Math.max(1, Math.round(gh*0.16));
+    let wmax=1; for(const c of cands) wmax=Math.max(wmax, c.w+slack);
+    const d0=new Float64Array(n+1).fill(NEG), d1=new Float64Array(n+1).fill(NEG);
+    const b0=new Array(n+1).fill(null), b1=new Array(n+1).fill(null);
+    d0[0]=0;
+    const top=b.colTop, bot=b.colBot, off=L-x0;
+    for(let x=1;x<=n;x++){
+      if(top[off+x-1]<0){                       /* 空白は素通り */
+        if(d0[x-1]>NEG/2 && d0[x-1]>d0[x]){ d0[x]=d0[x-1]; b0[x]={ch:'',w:1,st:0}; }
+        if(d1[x-1]>NEG/2 && d1[x-1]>d1[x]){ d1[x]=d1[x-1]; b1[x]={ch:'',w:1,st:1}; }
+      }
+      for(let w=1;w<=Math.min(wmax,x);w++){
+        const p0=d0[x-w], p1=d1[x-w];
+        if(p0<=NEG/2 && p1<=NEG/2) continue;
+        if(top[off+x-w]<0 || top[off+x-1]<0) continue;
+        let ty=1e9, by=-1;
+        for(let i=x-w;i<x;i++){
+          const t2=top[off+i];
+          if(t2<0) continue;
+          if(t2<ty) ty=t2;
+          if(bot[off+i]>by) by=bot[off+i];
+        }
+        if(by<0) continue;
+        const vec=ocrPatch(ink, W, L+x-w, ty, w, by-ty+1);   /* 切り出しは幅ごとに1回だけ */
+        for(let ci=0;ci<cands.length;ci++){
+          const c=cands[ci];
+          if(Math.abs(c.w-w)>slack) continue;
+          const sc=ocrDot(vec, c.t.vec);
+          if(sc<MINSC) continue;
+          if(c.sep){
+            if(p0<=NEG/2) continue;                          /* 区切りの連続は禁止 */
+            if(x-w===0 || x===n) continue;                   /* 先頭・末尾は数字のはず */
+            const v=p0+sc-LAM-SEPX;
+            if(v>d1[x]){ d1[x]=v; b1[x]={ch:c.t.ch,w:w,y1:by,h:by-ty+1,st:0}; }
+          }else{
+            const from=Math.max(p0,p1), st=(p0>=p1?0:1);
+            const v=from+sc-LAM;
+            if(v>d0[x]){ d0[x]=v; b0[x]={ch:c.t.ch,w:w,y1:by,h:by-ty+1,st:st}; }
+          }
+        }
+      }
+    }
+    let end=n, cur=0, val=NEG;
+    const pick=x=>{ if(d0[x]>=d1[x]){ return {v:d0[x],s:0}; } return {v:d1[x],s:1}; };
+    if(pick(n).v>NEG/2){ const q=pick(n); end=n; cur=q.s; val=q.v; }
+    else{
+      for(let x=n;x>=1;x--){ const q=pick(x); if(q.v>NEG/2){ end=x; cur=q.s; val=q.v; break; } }
+    }
+    if(val<=NEG/2) return {txt:'', score:0};
+    const seq=[]; let x=end, st=cur, guard=0;
+    while(x>0 && guard++<120){
+      const node=(st===0? b0[x] : b1[x]);
+      if(!node) break;
+      if(node.ch) seq.push(node);
+      x-=node.w; st=node.st;
+    }
+    seq.reverse();
+    if(!seq.length) return {txt:'', score:0};
+    const tall=seq.filter(q=>q.h>=gh*0.7);
+    const base = tall.length ? tall.reduce((a,q)=>a+q.y1,0)/tall.length : b.y1;
+    let txt='', nch=0;
+    for(const q of seq){
+      if(q.ch===','||q.ch==='.') txt += (q.y1>base+0.6 ? ',' : '.');
+      else txt += q.ch;
+      nch++;
+    }
+    return {txt:txt, score:(val+LAM*nch)/Math.max(1,nch)};
+  }
+
+  /* 形（桁の並び）を決め打ちして読み直す。余計な文字が混ざらなくなる */
+  function ocrLabelShaped(b, tpl, shape){
+    const L=b.left, R=b.right, n=R-L+1, K=shape.length;
+    if(n<3||!K) return {txt:'', score:0};
+    const NEG=-1e9, MINSC=0.28;
+    const ref=tpl.find(t=>t.ch==='0') || tpl[0];
+    const cands=tpl.map(t=>({t:t, w:Math.max(1,Math.round(t.w*gh/ref.h)), sep:(t.ch===','||t.ch==='.')}));
+    const slack=Math.max(1, Math.round(gh*0.16));
+    let wmax=1; for(const c of cands) wmax=Math.max(wmax, c.w+slack);
+    const S=K+1;
+    const dp=new Float64Array((n+1)*S).fill(NEG);
+    const bk=new Array((n+1)*S).fill(null);
+    dp[0]=0;
+    const top=b.colTop, bot=b.colBot, off=L-x0;
+    for(let x=1;x<=n;x++){
+      if(top[off+x-1]<0){
+        for(let k=0;k<S;k++){
+          const p=dp[(x-1)*S+k];
+          if(p>NEG/2 && p>dp[x*S+k]){ dp[x*S+k]=p; bk[x*S+k]={ch:'',w:1}; }
+        }
+      }
+      for(let w=1;w<=Math.min(wmax,x);w++){
+        if(top[off+x-w]<0 || top[off+x-1]<0) continue;
+        let any=false;
+        for(let k=1;k<S;k++) if(dp[(x-w)*S+k-1]>NEG/2){ any=true; break; }
+        if(!any) continue;
+        let ty=1e9, by=-1;
+        for(let i=x-w;i<x;i++){
+          const t2=top[off+i];
+          if(t2<0) continue;
+          if(t2<ty) ty=t2;
+          if(bot[off+i]>by) by=bot[off+i];
+        }
+        if(by<0) continue;
+        const vec=ocrPatch(ink, W, L+x-w, ty, w, by-ty+1);
+        let bestD=-2, chD='', bestS=-2, chS='';
+        for(let ci=0;ci<cands.length;ci++){
+          const c=cands[ci];
+          if(Math.abs(c.w-w)>slack) continue;
+          const sc=ocrDot(vec, c.t.vec);
+          if(c.sep){ if(sc>bestS){ bestS=sc; chS=c.t.ch; } }
+          else { if(sc>bestD){ bestD=sc; chD=c.t.ch; } }
+        }
+        for(let k=1;k<S;k++){
+          const from=dp[(x-w)*S+k-1];
+          if(from<=NEG/2) continue;
+          const isSep=(shape[k-1]==='S');
+          const sc=isSep?bestS:bestD, ch=isSep?chS:chD;
+          if(sc<MINSC) continue;
+          const v=from+sc;
+          if(v>dp[x*S+k]){ dp[x*S+k]=v; bk[x*S+k]={ch:ch,w:w,y1:by,h:by-ty+1}; }
+        }
+      }
+    }
+    let end=-1, val=NEG;
+    for(let x=n;x>=1;x--){ if(dp[x*S+K]>NEG/2){ end=x; val=dp[x*S+K]; break; } }
+    if(end<0) return {txt:'', score:0};
+    const seq=[]; let x=end, k=K, guard=0;
+    while(x>0 && k>=0 && guard++<160){
+      const node=bk[x*S+k];
+      if(!node) break;
+      if(node.ch){ seq.push(node); k--; }
+      x-=node.w;
+    }
+    seq.reverse();
+    if(seq.length!==K) return {txt:'', score:0};
+    const tall=seq.filter(q=>q.h>=gh*0.7);
+    const base = tall.length ? tall.reduce((a,q)=>a+q.y1,0)/tall.length : b.y1;
+    let txt='';
+    for(const q of seq) txt += (q.ch===','||q.ch==='.') ? (q.y1>base+0.6?',':'.') : q.ch;
+    return {txt:txt, score:val/K};
+  }
+
+  /* まず先頭2行だけで一番合うフォントを選び、そのフォントで全部読む（速度のため） */
+  const probe=best.slice(0, Math.min(2,best.length));
+  let fam=OCR.fonts[0], fs=-9;
+  for(const f of OCR.fonts){
+    const tpl=ocrTemplates(gh, f).filter(Boolean);
+    let t=0;
+    for(const b of probe) t+=ocrLabel(b, tpl).score;
+    t/=probe.length;
+    if(t>fs){ fs=t; fam=f; }
+  }
+  const tplW=ocrTemplates(gh, fam).filter(Boolean);
+  let total=0; let reads=[];
+  const shapes={};
+  for(const b of best){
+    const r=ocrLabel(b, tplW);
+    total+=r.score;
+    reads.push({y:(b.y0+b.y1)/2, txt:r.txt, b:b});
+    if(r.txt){
+      const sh=r.txt.replace(/[0-9]/g,'D').replace(/[.,]/g,'S');
+      shapes[sh]=(shapes[sh]||0)+1;
+    }
+  }
+  /* 一番多い「形」に合わせて全部読み直す */
+  let shp=null, shpN=0;
+  for(const k in shapes) if(shapes[k]>shpN){ shpN=shapes[k]; shp=k; }
+  if(shp && shpN>=2 && shp.length>=3){
+    const arr=shp.split('');
+    let t2=0; const rd2=[];
+    for(const r of reads){
+      const q=ocrLabelShaped(r.b, tplW, arr);
+      t2+=q.score;
+      rd2.push({y:r.y, txt:q.txt||r.txt});
+    }
+    if(t2/reads.length >= total/reads.length - 0.08){ reads=rd2; total=t2; }
+  }
+  reads=reads.map(r=>({y:r.y, txt:r.txt}));
+  const win={score:total/best.length, reads:reads, fam:fam};
+  if(!win) return {err:'数字を読み取れません'};
+  const dbg=win.reads.map(r=>r.txt);
+
+  /* 文字列 → 数値。
+     小数点は形が小さく、実測で '1' や '3' に誤読された（'4,580.0000000'→'4,58011000000'）。
+     カンマははっきり読めているので、「最後のカンマの後ろ3桁までが整数部」という
+     桁区切りの規則で桁を確定する。小数部は捨てる（目盛りの刻みは整数なので困らない）。 */
+  const axisNum=(t)=>{
+    const s=String(t).replace(/[^0-9.,]/g,'');
+    const ci=s.lastIndexOf(',');
+    if(ci>=0){
+      const digits=s.replace(/[.,]/g,'');
+      const intLen=s.slice(0,ci).replace(/[.,]/g,'').length+3;
+      if(digits.length<intLen || intLen>15) return null;
+      const v=parseInt(digits.slice(0,intLen),10);
+      return isFinite(v) ? {v:v, dec:0} : null;
+    }
+    const m=s.match(/^(\d+)(?:\.(\d+))?$/);
+    if(!m) return null;
+    const v=parseFloat(s);
+    return isFinite(v) ? {v:v, dec:m[2]?m[2].length:0} : null;
+  };
+  const pairs=[];
+  for(const r of win.reads){
+    if(/[?]/.test(r.txt)) continue;
+    const q=axisNum(r.txt);
+    if(!q) continue;
+    pairs.push({y:r.y, v:q.v, dec:q.dec, txt:r.txt});
+  }
+  if(pairs.length<3) return {err:'数字を読み取れません（'+pairs.length+'件）', dbg:dbg};
+
+  /* 目盛りは一直線に並ぶ。2点の総当たりで直線を作り、一番多くが乗る直線を採る。
+     これで数字を1つ2つ読み違えても正しい較正に行き着く（実測で1/7は誤読していた）。 */
+  pairs.sort((a,b)=>a.y-b.y);
+  if(pairs.length<3) return {err:'目盛りが読み取れません', dbg:dbg};
+  let fit=null;
+  for(let i=0;i<pairs.length;i++){
+    for(let j=i+1;j<pairs.length;j++){
+      const dy=pairs[j].y-pairs[i].y;
+      if(Math.abs(dy) < H*0.04) continue;
+      const sl2=(pairs[j].v-pairs[i].v)/dy;
+      if(!(sl2<0)) continue;                          /* 下に行くほど安い、が価格軸 */
+      const a2=pairs[i].v-sl2*pairs[i].y;
+      const tol=Math.abs(sl2)*H*0.004;                /* 画面高の0.4%ぶんまで許す */
+      const inl=pairs.filter(q=>Math.abs(q.v-(a2+sl2*q.y))<=tol);
+      if(!fit || inl.length>fit.inl.length) fit={inl:inl};
+    }
+  }
+  if(!fit || fit.inl.length<3) return {err:'読み取った数字がばらついています', dbg:dbg};
+  const keep=fit.inl;
+  const sl=(keep[keep.length-1].v-keep[0].v)/(keep[keep.length-1].y-keep[0].y);
+  if(!(sl<0)) return {err:'目盛りの並びが上下逆です', dbg:dbg};
+  const dec=Math.max.apply(null, keep.map(p=>p.dec));
+  let n2=0,sx=0,sy=0,sxx=0,sxy=0;
+  for(const q of keep){ n2++; sx+=q.y; sy+=q.v; sxx+=q.y*q.y; sxy+=q.y*q.v; }
+  const den2=n2*sxx-sx*sx;
+  if(Math.abs(den2)<1e-9) return {err:'目盛りの間隔が狭すぎます', dbg:dbg};
+  const bb2=(n2*sxy-sx*sy)/den2, aa2=(sy*sxx-sx*sxy)/den2;
+  const top={y:keep[0].y, v:aa2+bb2*keep[0].y};
+  const bot={y:keep[keep.length-1].y, v:aa2+bb2*keep[keep.length-1].y};
+  if(Math.abs(bot.y-top.y)<H*0.15) return {err:'目盛りの間隔が狭すぎます', dbg:dbg};
+  const fmt=v=>dec>0 ? v.toFixed(dec) : String(Math.round(v));
+  return {
+    ok:true, n:keep.length, dec:dec, score:win.score, fam:win.fam, dbg:dbg,
+    xn:(x0+x1)/2/W,
+    top:{ yn:top.y/H, v:top.v, txt:fmt(top.v) },
+    bot:{ yn:bot.y/H, v:bot.v, txt:fmt(bot.v) },
+    all:keep.map(p=>({yn:p.y/H, v:p.v}))
+  };
+}
+
 /* ---------- エディタへの組み込み ---------- */
 function ocrSay(msg, cls){
   const el=$('ocrMsg'); if(!el) return;
@@ -2649,13 +3078,12 @@ $('csvCalBtn').addEventListener('click',()=>{
    ②答え仕込み：価格の決め方を3通り持ち、どれも駄目でも止まらないようにする層
 
    強い順:
-     1) 手で入れた2つの価格 … 入れたら必ずこれが勝つ
-     2) 内蔵データとの照合   … 通れば価格が自動で入り、本番の引き直しも効く
+     1) 手で入れた2つの価格   … 入れたら必ずこれが勝つ（保険）
+     2) 内蔵データとの照合     … 通れば本番の引き直しまで効く
+     3) 画像の右の目盛りを読む … データが無くても、画像1枚で価格が決まる
 
-   画像の目盛りをOCRで読む道も試したが、実測で3回中2回外した（しかも黙って
-   間違った価格を入れてしまう）ので採らない。入力2つの方が速くて確実。
-
-   照合が通らないことを理由に仕込みを止めない。線2本＋価格2つで必ず成立する。
+   3) は小数点を信用せず、カンマの位置で桁を決め、2点総当たりで直線を当てている
+   （patch_ocr.py）。手で数字を打たせないための本命。
    ===================================================================== */
 function manualCal(){
   if(!ED.en || !ED.tg) return null;
@@ -2669,10 +3097,26 @@ function manualCal(){
   const bb=(p2-p1)/(y2-y1), aa=p1-bb*y1;
   return { mode:'manual', aa:aa, bb:bb, dec:Math.max(decOf(s1), decOf(s2)), dsKey:null };
 }
+/* 画像の右にある価格の目盛りをそのまま読む（1枚で完結する） */
+function ocrCal(){
+  if(!ED.img) return null;
+  if(ED.ocr === undefined){
+    ED.ocr = null;
+    try{ const r = ocrReadAxis(ED.img); if(r && r.ok && r.n>=3) ED.ocr = r; }catch(e){}
+  }
+  const r = ED.ocr;
+  if(!r) return null;
+  const y1=r.top.yn, y2=r.bot.yn;
+  if(Math.abs(y1-y2) < 1e-6) return null;
+  const bb=(r.bot.v-r.top.v)/(y2-y1), aa=r.top.v-bb*y1;
+  if(!isFinite(aa) || !isFinite(bb) || !(bb<0)) return null;
+  return { mode:'ocr', aa:aa, bb:bb, dec:(r.dec!=null?r.dec:2), dsKey:null, n:r.n };
+}
 function edEnsureCal(){
   const m=manualCal();
   if(m){ ED.cal=m; return; }
-  ED.cal = ED.calCsv || null;
+  if(ED.calCsv){ ED.cal=ED.calCsv; return; }
+  ED.cal = ocrCal();
 }
 function mcSync(){
   const box=document.getElementById('manualCal');
@@ -2689,6 +3133,9 @@ function mcSync(){
     el.className='mchint ok';
   }else if(c.mode==='csv'){
     el.textContent='内蔵データと一致したので価格は自動で入りました（入力は不要）。';
+    el.className='mchint ok';
+  }else if(c.mode==='ocr'){
+    el.textContent='画像の右の目盛りを読み取って価格を決めました（'+c.n+'個の目盛りが一直線に乗っています）。ずれていれば下に入れて上書きできます。';
     el.className='mchint ok';
   }
 }

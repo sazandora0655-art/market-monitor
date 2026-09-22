@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MarketEye｜Chart Analysis</title>
-<!-- PC web build 2026-09-22 17:04 / bars→2026-09-21 16:48 -->
+<!-- PC web build 2026-09-22 18:20 / bars→2026-09-21 16:48 -->
 <style>
   :root{
     --bg:#0c0a1e; --bg2:#110e28; --panel:#161233; --panel2:#1c1740; --inset:#0e0b22;
@@ -1228,10 +1228,16 @@ function edIdentify(){
   armPick('en');
 }
 function edIdentifyFail(msg){
-  ocrSay(msg,'ng');
   $('reMatchRow').style.display='flex';
-  mcSync();
-  $('edSub').textContent='線を2本引いてください（価格は自動で入るか、下に入れるだけ）';
+  edEnsureCal(); mcSync();
+  if(ED.cal && ED.cal.mode==='ocr'){
+    /* 内蔵データに無くても、画像の目盛りから価格が決まっていれば何も問題ない */
+    ocrSay('画像の右の目盛りから価格を読み取りました（'+ED.cal.n+'個が一直線）。このまま線を2本引いてください。','ok');
+    $('edSub').textContent='基準1（エントリーの線）の高さでクリック';
+  }else{
+    ocrSay(msg,'ng');
+    $('edSub').textContent='線を2本引いてください（価格は自動で入るか、下に入れるだけ）';
+  }
   if(!ED.en) armPick('en');   /* 照合が通らなくてもそのまま線を引けるように待ち受ける */
 }
 function edLayout(){
@@ -3046,39 +3052,63 @@ function ocrReadAxis(img, hintXn){
   if(!win) return {err:'数字を読み取れません'};
   const dbg=win.reads.map(r=>r.txt);
 
-  /* 文字列 → 数値。区切りは形で判定済み */
+  /* 文字列 → 数値。
+     小数点は形が小さく、実測で '1' や '3' に誤読された（'4,580.0000000'→'4,58011000000'）。
+     カンマははっきり読めているので、「最後のカンマの後ろ3桁までが整数部」という
+     桁区切りの規則で桁を確定する。小数部は捨てる（目盛りの刻みは整数なので困らない）。 */
+  const axisNum=(t)=>{
+    const s=String(t).replace(/[^0-9.,]/g,'');
+    const ci=s.lastIndexOf(',');
+    if(ci>=0){
+      const digits=s.replace(/[.,]/g,'');
+      const intLen=s.slice(0,ci).replace(/[.,]/g,'').length+3;
+      if(digits.length<intLen || intLen>15) return null;
+      const v=parseInt(digits.slice(0,intLen),10);
+      return isFinite(v) ? {v:v, dec:0} : null;
+    }
+    const m=s.match(/^(\d+)(?:\.(\d+))?$/);
+    if(!m) return null;
+    const v=parseFloat(s);
+    return isFinite(v) ? {v:v, dec:m[2]?m[2].length:0} : null;
+  };
   const pairs=[];
   for(const r of win.reads){
-    const t=r.txt;
-    if(/[?]/.test(t)) continue;
-    const clean=t.replace(/,/g,'');
-    if(!/^\d+(\.\d+)?$/.test(clean)) continue;
-    const v=parseFloat(clean);
-    if(!isFinite(v)) continue;
-    const m=clean.match(/\.(\d+)$/);
-    pairs.push({y:r.y, v:v, dec:m?m[1].length:0, txt:clean});
+    if(/[?]/.test(r.txt)) continue;
+    const q=axisNum(r.txt);
+    if(!q) continue;
+    pairs.push({y:r.y, v:q.v, dec:q.dec, txt:r.txt});
   }
   if(pairs.length<3) return {err:'数字を読み取れません（'+pairs.length+'件）', dbg:dbg};
 
-  /* 目盛りは等間隔。並びから外れた読み違いを捨てる */
+  /* 目盛りは一直線に並ぶ。2点の総当たりで直線を作り、一番多くが乗る直線を採る。
+     これで数字を1つ2つ読み違えても正しい較正に行き着く（実測で1/7は誤読していた）。 */
   pairs.sort((a,b)=>a.y-b.y);
-  const slopes=[];
-  for(let i=1;i<pairs.length;i++){
-    const dy=pairs[i].y-pairs[i-1].y;
-    if(dy>2) slopes.push((pairs[i].v-pairs[i-1].v)/dy);
+  if(pairs.length<3) return {err:'目盛りが読み取れません', dbg:dbg};
+  let fit=null;
+  for(let i=0;i<pairs.length;i++){
+    for(let j=i+1;j<pairs.length;j++){
+      const dy=pairs[j].y-pairs[i].y;
+      if(Math.abs(dy) < H*0.04) continue;
+      const sl2=(pairs[j].v-pairs[i].v)/dy;
+      if(!(sl2<0)) continue;                          /* 下に行くほど安い、が価格軸 */
+      const a2=pairs[i].v-sl2*pairs[i].y;
+      const tol=Math.abs(sl2)*H*0.004;                /* 画面高の0.4%ぶんまで許す */
+      const inl=pairs.filter(q=>Math.abs(q.v-(a2+sl2*q.y))<=tol);
+      if(!fit || inl.length>fit.inl.length) fit={inl:inl};
+    }
   }
-  if(!slopes.length) return {err:'目盛りが読み取れません', dbg:dbg};
-  slopes.sort((a,b)=>a-b);
-  const sl=slopes[Math.floor(slopes.length/2)];
+  if(!fit || fit.inl.length<3) return {err:'読み取った数字がばらついています', dbg:dbg};
+  const keep=fit.inl;
+  const sl=(keep[keep.length-1].v-keep[0].v)/(keep[keep.length-1].y-keep[0].y);
   if(!(sl<0)) return {err:'目盛りの並びが上下逆です', dbg:dbg};
-  let keep=null, bestN=0;
-  for(const p of pairs){
-    const grp=pairs.filter(q=>Math.abs((q.v-p.v)-sl*(q.y-p.y)) < Math.abs(sl)*Math.max(6,(pairs[pairs.length-1].y-pairs[0].y)*0.06));
-    if(grp.length>bestN){ bestN=grp.length; keep=grp; }
-  }
-  if(!keep || keep.length<3) return {err:'読み取った数字がばらついています', dbg:dbg};
   const dec=Math.max.apply(null, keep.map(p=>p.dec));
-  const top=keep[0], bot=keep[keep.length-1];
+  let n2=0,sx=0,sy=0,sxx=0,sxy=0;
+  for(const q of keep){ n2++; sx+=q.y; sy+=q.v; sxx+=q.y*q.y; sxy+=q.y*q.v; }
+  const den2=n2*sxx-sx*sx;
+  if(Math.abs(den2)<1e-9) return {err:'目盛りの間隔が狭すぎます', dbg:dbg};
+  const bb2=(n2*sxy-sx*sy)/den2, aa2=(sy*sxx-sx*sxy)/den2;
+  const top={y:keep[0].y, v:aa2+bb2*keep[0].y};
+  const bot={y:keep[keep.length-1].y, v:aa2+bb2*keep[keep.length-1].y};
   if(Math.abs(bot.y-top.y)<H*0.15) return {err:'目盛りの間隔が狭すぎます', dbg:dbg};
   const fmt=v=>dec>0 ? v.toFixed(dec) : String(Math.round(v));
   return {
@@ -3137,13 +3167,12 @@ function bakedBootAsync(done){
    ②答え仕込み：価格の決め方を3通り持ち、どれも駄目でも止まらないようにする層
 
    強い順:
-     1) 手で入れた2つの価格 … 入れたら必ずこれが勝つ
-     2) 内蔵データとの照合   … 通れば価格が自動で入り、本番の引き直しも効く
+     1) 手で入れた2つの価格   … 入れたら必ずこれが勝つ（保険）
+     2) 内蔵データとの照合     … 通れば本番の引き直しまで効く
+     3) 画像の右の目盛りを読む … データが無くても、画像1枚で価格が決まる
 
-   画像の目盛りをOCRで読む道も試したが、実測で3回中2回外した（しかも黙って
-   間違った価格を入れてしまう）ので採らない。入力2つの方が速くて確実。
-
-   照合が通らないことを理由に仕込みを止めない。線2本＋価格2つで必ず成立する。
+   3) は小数点を信用せず、カンマの位置で桁を決め、2点総当たりで直線を当てている
+   （patch_ocr.py）。手で数字を打たせないための本命。
    ===================================================================== */
 function manualCal(){
   if(!ED.en || !ED.tg) return null;
@@ -3157,10 +3186,26 @@ function manualCal(){
   const bb=(p2-p1)/(y2-y1), aa=p1-bb*y1;
   return { mode:'manual', aa:aa, bb:bb, dec:Math.max(decOf(s1), decOf(s2)), dsKey:null };
 }
+/* 画像の右にある価格の目盛りをそのまま読む（1枚で完結する） */
+function ocrCal(){
+  if(!ED.img) return null;
+  if(ED.ocr === undefined){
+    ED.ocr = null;
+    try{ const r = ocrReadAxis(ED.img); if(r && r.ok && r.n>=3) ED.ocr = r; }catch(e){}
+  }
+  const r = ED.ocr;
+  if(!r) return null;
+  const y1=r.top.yn, y2=r.bot.yn;
+  if(Math.abs(y1-y2) < 1e-6) return null;
+  const bb=(r.bot.v-r.top.v)/(y2-y1), aa=r.top.v-bb*y1;
+  if(!isFinite(aa) || !isFinite(bb) || !(bb<0)) return null;
+  return { mode:'ocr', aa:aa, bb:bb, dec:(r.dec!=null?r.dec:2), dsKey:null, n:r.n };
+}
 function edEnsureCal(){
   const m=manualCal();
   if(m){ ED.cal=m; return; }
-  ED.cal = ED.calCsv || null;
+  if(ED.calCsv){ ED.cal=ED.calCsv; return; }
+  ED.cal = ocrCal();
 }
 function mcSync(){
   const box=document.getElementById('manualCal');
@@ -3177,6 +3222,9 @@ function mcSync(){
     el.className='mchint ok';
   }else if(c.mode==='csv'){
     el.textContent='内蔵データと一致したので価格は自動で入りました（入力は不要）。';
+    el.className='mchint ok';
+  }else if(c.mode==='ocr'){
+    el.textContent='画像の右の目盛りを読み取って価格を決めました（'+c.n+'個の目盛りが一直線に乗っています）。ずれていれば下に入れて上書きできます。';
     el.className='mchint ok';
   }
 }
